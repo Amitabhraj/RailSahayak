@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Optimizer Studio | Rail-Sync AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">AI Optimization Studio & Simulation Lab</h2>
+            <p class="text-muted mb-0 small">
+                Constraint Satisfaction & Multi-Objective Genetic Bundling Engine for Multi-Department Rail Maintenance
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-synergy px-3 py-2">
+                <i class="fa-solid fa-microchip me-1"></i> Algorithm Engine: Active
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="row g-4">
+        <!-- Left Column: Controls & What-If Simulator -->
+        <div class="col-lg-5">
+            <!-- Optimization Control Card -->
+            <div class="card-rail mb-4">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-sliders text-primary"></i> Optimizer Execution Console
+                    </h5>
+                    <span class="badge bg-secondary">v2.4 Solver</span>
+                </div>
+                <div class="card-rail-body">
+                    <form id="studioRunOptForm">
+                        <div class="mb-3">
+                            <label class="form-label text-dark small fw-bold">Planning Time Horizon</label>
+                            <select class="form-select form-select-rail" id="studioHorizonSelect">
+                                <option value="WEEKLY" selected>Weekly Operational Master Schedule (7 Days Rolling)</option>
+                                <option value="MONTHLY">Monthly Strategic Maintenance Plan (30 Days)</option>
+                            </select>
+                            <div class="text-muted small mt-1">Weekly creates hour-by-hour operational slots; Monthly maps cyclic corridor megablocks.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-dark small fw-bold">Multi-Objective Strategy</label>
+                            <select class="form-select form-select-rail" id="studioStrategySelect">
+                                <option value="MULTI_OBJECTIVE_BALANCED" selected>Balanced (Maximize Uptime + Zero Passenger Delay)</option>
+                                <option value="MAX_UPTIME">Max Asset Uptime (Aggressively bundle 3+ works)</option>
+                                <option value="ZERO_PASSENGER_DELAY">Passenger Punctuality (Strict zero detention on Mail/Exp)</option>
+                            </select>
+                        </div>
+
+                        <div class="p-3 mb-3 rounded bg-light border text-muted small">
+                            <div class="text-dark fw-bold mb-2"><i class="fa-solid fa-check-double text-success me-1"></i> Active Constraints Evaluated:</div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <span>Co-located spatial clustering (Proximity &le; 10 km)</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <span>25kV OHE isolation when track machine operates &le; 2m</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <span>Collision avoidance against P1 trains (Rajdhani / Vande Bharat)</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <span>Loop line freight regulation buffer checking</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-rail-synergy w-100 py-2" id="btnStudioRunOptimizer">
+                            <i class="fa-solid fa-bolt me-1"></i> Run AI Optimization Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- What-If Dynamic Re-Planning Simulator -->
+            <div class="card-rail border-danger">
+                <div class="card-rail-header border-danger">
+                    <h5 class="card-rail-title text-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i> "What-If" Emergency Re-Plan Simulator
+                    </h5>
+                    <span class="badge bg-danger">Simulation</span>
+                </div>
+                <div class="card-rail-body">
+                    <p class="text-muted small">
+                        Inject an unpredicted emergency defect into the network to observe how Rail-Sync AI's dynamic re-planner preempts non-urgent blocks and clears an immediate maintenance slot.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label text-dark small fw-bold">Select Scenario</label>
+                        <select class="form-select form-select-rail" id="studioEmgDefectSelect">
+                            <option value="RAIL_FRACTURE" selected>Transverse Rail Fracture on UP Line (P-Way Defect)</option>
+                            <option value="OHE_BREAKDOWN">OHE Catenary Wire Dropper Snapped (TRD Defect)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-dark small fw-bold">Target Corridor</label>
+                        <select class="form-select form-select-rail" id="studioEmgCorridorSelect">
+                            {% for c in corridors %}
+                            <option value="{{ c.id }}">{{ c.code }} - {{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-danger w-100" id="btnStudioInjectEmergency">
+                        <i class="fa-solid fa-radiation me-1"></i> Inject Emergency & Dynamically Re-Plan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Before vs After & Optimization Run History -->
+        <div class="col-lg-7">
+            <!-- Before vs After AI Transformation Card -->
+            <div class="card-rail mb-4">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-scale-balanced text-primary"></i> Impact Matrix: Decentralized vs Rail-Sync AI
+                    </h5>
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                        +{{ latest_run.synergy_rate_percentage|default:"75.0" }}% Efficiency
+                    </span>
+                </div>
+                <div class="card-rail-body p-4">
+                    <div class="row g-3">
+                        <!-- Before Column -->
+                        <div class="col-md-6">
+                            <div class="p-3 rounded bg-light border border-danger border-opacity-50 h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-danger fw-bold small text-uppercase">Current Manual BDMS</span>
+                                    <i class="fa-solid fa-xmark text-danger"></i>
+                                </div>
+                                <div class="text-muted small mb-3">Decentralized & Siloed Scheduling</div>
+
+                                <div class="mb-3">
+                                    <div class="small text-muted">Separate Block Closures:</div>
+                                    <div class="fs-4 fw-bold font-monospace text-dark">{{ manual_blocks_count }} independent blocks</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="small text-muted">Total Track Downtime:</div>
+                                    <div class="fs-4 fw-bold font-monospace text-danger">{{ manual_total_hours }} hrs</div>
+                                </div>
+                                <div class="small text-muted">
+                                    • Departments take uncoordinated blocks on same section on different days.<br>
+                                    • Repeated train speed restrictions and detention.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- After Column -->
+                        <div class="col-md-6">
+                            <div class="p-3 rounded bg-light border border-success h-100" style="box-shadow: var(--glow-synergy);">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-success fw-bold small text-uppercase">Rail-Sync AI Coordinated</span>
+                                    <i class="fa-solid fa-check text-success"></i>
+                                </div>
+                                <div class="text-muted small mb-3">Multi-Department Shadow Blocks</div>
+
+                                <div class="mb-3">
+                                    <div class="small text-muted">Consolidated Block Windows:</div>
+                                    <div class="fs-4 fw-bold font-monospace text-dark">{{ total_blocks }} scheduled blocks</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="small text-muted">Total Downtime Required:</div>
+                                    <div class="fs-4 fw-bold font-monospace text-success">{{ ai_total_hours }} hrs</div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge badge-synergy fs-6 px-3 py-1">
+                                        <i class="fa-solid fa-clock me-1"></i> {{ downtime_saved_hours }} hrs Downtime Saved!
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Optimization Runs Log -->
+            <div class="card-rail">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-clock-rotate-left text-primary"></i> Optimization Audit Log & Solver Performance
+                    </h5>
+                </div>
+                <div class="card-rail-body p-0">
+                    <div class="table-responsive">
+                        <table class="table-rail mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Run ID</th>
+                                    <th>Horizon & Strategy</th>
+                                    <th>Bundled Synergy</th>
+                                    <th>Downtime Saved</th>
+                                    <th>Solver Time</th>
+                                    <th>Availability</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in runs_history %}
+                                <tr>
+                                    <td class="font-monospace text-dark small fw-bold">{{ r.run_id }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ r.horizon }}</span>
+                                        <div class="text-muted small">{{ r.strategy }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-synergy">{{ r.synergy_rate_percentage|floatformat:1 }}%</span>
+                                        <div class="text-muted small">{{ r.multi_dept_bundled_count }} bundled blocks</div>
+                                    </td>
+                                    <td class="text-success fw-bold font-monospace small">+{{ r.total_downtime_saved_hours }} hrs</td>
+                                    <td class="font-monospace small text-muted">{{ r.execution_time_ms }} ms</td>
+                                    <td>
+                                        <span class="text-primary fw-bold font-monospace small">{{ r.asset_availability_score }}%</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No runs recorded yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Connect Studio Run Button
+    const btnStudioRun = document.getElementById('btnStudioRunOptimizer');
+    if (btnStudioRun) {
+        btnStudioRun.addEventListener('click', async () => {
+            const horizon = document.getElementById('studioHorizonSelect')?.value || 'WEEKLY';
+            const strategy = document.getElementById('studioStrategySelect')?.value || 'MULTI_OBJECTIVE_BALANCED';
+
+            btnStudioRun.disabled = true;
+            btnStudioRun.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Computing Global Optimal Schedule...`;
+
+            try {
+                const res = await fetch('/api/run-optimizer/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ horizon, strategy })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast(`AI Scheduling Complete! Bundled ${data.coordinated_blocks} multi-dept blocks. Saved ${data.total_downtime_saved_hours} hrs.`, 'success');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    showToast(data.message || 'Optimization failed', 'danger');
+                    btnStudioRun.disabled = false;
+                    btnStudioRun.innerHTML = `<i class="fa-solid fa-bolt me-1"></i> Run AI Optimization Now`;
+                }
+            } catch (err) {
+                showToast(err.message, 'danger');
+                btnStudioRun.disabled = false;
+                btnStudioRun.innerHTML = `<i class="fa-solid fa-bolt me-1"></i> Run AI Optimization Now`;
+            }
+        });
+    }
+
+    // Connect Studio Inject Emergency Button
+    const btnStudioEmg = document.getElementById('btnStudioInjectEmergency');
+    if (btnStudioEmg) {
+        btnStudioEmg.addEventListener('click', async () => {
+            const defectType = document.getElementById('studioEmgDefectSelect')?.value || 'RAIL_FRACTURE';
+            const corridorId = document.getElementById('studioEmgCorridorSelect')?.value || '';
+
+            btnStudioEmg.disabled = true;
+            btnStudioEmg.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Processing...`;
+
+            try {
+                const res = await fetch('/api/inject-emergency/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ defect_type: defectType, corridor_id: corridorId })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast(`Dynamic Re-Planning Triggered! ${data.message}`, 'danger');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Failed', 'danger');
+                    btnStudioEmg.disabled = false;
+                    btnStudioEmg.innerHTML = `<i class="fa-solid fa-radiation me-1"></i> Inject Emergency & Dynamically Re-Plan`;
+                }
+            } catch (err) {
+                showToast(err.message, 'danger');
+                btnStudioEmg.disabled = false;
+                btnStudioEmg.innerHTML = `<i class="fa-solid fa-radiation me-1"></i> Inject Emergency & Dynamically Re-Plan`;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

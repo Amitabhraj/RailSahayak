@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+
+{% block title %}Integrated Data Hub | Rail-Sync AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Multi-Department Integrated Data Hub</h2>
+            <p class="text-muted mb-0 small">
+                Single pane of glass unifying Track (TMS), Signalling (SMMS), Traction (TDMS), and Control Office Application (COA)
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'department_portal' %}" class="btn btn-rail-primary btn-sm">
+                <i class="fa-solid fa-plus me-1"></i> Submit New Demand
+            </a>
+        </div>
+    </div>
+
+    <!-- Department Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card-rail p-3 d-flex align-items-center justify-content-between border-start border-4 border-primary">
+                <div>
+                    <div class="small text-muted text-uppercase fw-bold">TMS Engineering Demands</div>
+                    <div class="h3 fw-bold text-primary mb-0">{{ total_tms }}</div>
+                    <div class="text-muted small">P-Way, Tampers, Rails, Screening</div>
+                </div>
+                <i class="fa-solid fa-wrench fs-2 text-primary opacity-50"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-rail p-3 d-flex align-items-center justify-content-between border-start border-4 border-warning">
+                <div>
+                    <div class="small text-muted text-uppercase fw-bold">SMMS Signal Demands</div>
+                    <div class="h3 fw-bold text-warning mb-0">{{ total_smms }}</div>
+                    <div class="text-muted small">Points, Track Circuits, Interlocking</div>
+                </div>
+                <i class="fa-solid fa-traffic-light fs-2 text-warning opacity-50"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-rail p-3 d-flex align-items-center justify-content-between border-start border-4 border-purple" style="border-left-color: #7e22ce !important;">
+                <div>
+                    <div class="small text-muted text-uppercase fw-bold">TDMS Electrical Demands</div>
+                    <div class="h3 fw-bold mb-0" style="color: #7e22ce;">{{ total_tdms }}</div>
+                    <div class="text-muted small">25kV OHE, Cantilevers, Power Blocks</div>
+                </div>
+                <i class="fa-solid fa-bolt fs-2 opacity-50" style="color: #7e22ce;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Tabs -->
+    <ul class="nav nav-tabs mb-3" id="dataHubTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-bold" id="demands-tab" data-bs-toggle="tab" data-bs-target="#demands-pane" type="button">
+                <i class="fa-solid fa-list-check me-2 text-primary"></i> Maintenance Demands Queue
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="trains-tab" data-bs-toggle="tab" data-bs-target="#trains-pane" type="button">
+                <i class="fa-solid fa-train me-2 text-warning"></i> COA Timetable & Goods Forecast
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="machines-tab" data-bs-toggle="tab" data-bs-target="#machines-pane" type="button">
+                <i class="fa-solid fa-truck-monster me-2 text-success"></i> Track Machines & Fleet
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="dataHubTabContent">
+        <!-- TAB 1: Demands Queue -->
+        <div class="tab-pane fade show active" id="demands-pane">
+            <div class="card-rail">
+                <!-- Filter Bar -->
+                <div class="card-rail-header flex-wrap gap-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <!-- Department Pill Filters -->
+                        <div class="btn-group btn-group-sm">
+                            <a href="?dept=ALL&corridor={{ corridor_filter }}&q={{ search_query }}" class="btn {% if dept_filter == 'ALL' %}btn-rail-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+                            <a href="?dept=TMS&corridor={{ corridor_filter }}&q={{ search_query }}" class="btn {% if dept_filter == 'TMS' %}btn-rail-primary{% else %}btn-outline-secondary{% endif %}">TMS (Track)</a>
+                            <a href="?dept=SMMS&corridor={{ corridor_filter }}&q={{ search_query }}" class="btn {% if dept_filter == 'SMMS' %}btn-rail-primary{% else %}btn-outline-secondary{% endif %}">SMMS (Signal)</a>
+                            <a href="?dept=TDMS&corridor={{ corridor_filter }}&q={{ search_query }}" class="btn {% if dept_filter == 'TDMS' %}btn-rail-primary{% else %}btn-outline-secondary{% endif %}">TDMS (TRD/OHE)</a>
+                        </div>
+
+                        <!-- Corridor Filter -->
+                        <select class="form-select form-select-sm form-select-rail" style="width: 180px;" onchange="window.location.href='?dept={{ dept_filter }}&corridor=' + this.value + '&q={{ search_query }}'">
+                            <option value="ALL" {% if corridor_filter == 'ALL' %}selected{% endif %}>All Corridors</option>
+                            {% for c in corridors %}
+                            <option value="{{ c.code }}" {% if corridor_filter == c.code %}selected{% endif %}>{{ c.code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Search Box -->
+                    <form method="GET" class="d-flex gap-2">
+                        <input type="hidden" name="dept" value="{{ dept_filter }}">
+                        <input type="hidden" name="corridor" value="{{ corridor_filter }}">
+                        <input type="text" name="q" value="{{ search_query }}" class="form-control form-control-sm form-control-rail" placeholder="Search defect, km, ID..." style="width: 220px;">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </form>
+                </div>
+
+                <!-- Demands Table -->
+                <div class="card-rail-body p-0">
+                    <div class="table-responsive">
+                        <table class="table-rail mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Demand ID & Dept</th>
+                                    <th>Corridor & KM Range</th>
+                                    <th>Maintenance Activity</th>
+                                    <th>Severity / Criticality</th>
+                                    <th>Duration & Power</th>
+                                    <th>AI Priority Score</th>
+                                    <th>Planning Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in demands %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark font-monospace">{{ d.demand_id }}</div>
+                                        <span class="badge {% if d.source_system == 'TMS' %}badge-tms{% elif d.source_system == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}">
+                                            {{ d.source_system }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-primary fw-bold">{{ d.corridor.code }}</span>
+                                        <div class="small text-dark">km {{ d.km_start|floatformat:1 }} - {{ d.km_end|floatformat:1 }}</div>
+                                        <div class="small text-muted">{{ d.track_line }} Line ({{ d.section_length_km }} km)</div>
+                                    </td>
+                                    <td style="max-width: 280px;">
+                                        <div class="fw-bold text-dark small">{{ d.activity_name }}</div>
+                                        <p class="text-muted small mb-0">{{ d.defect_description|truncatechars:90 }}</p>
+                                        {% if d.speed_restriction_imposed %}
+                                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger small mt-1">
+                                                <i class="fa-solid fa-gauge-simple me-1"></i> TSR Active: {{ d.speed_restriction_kmh }} km/h
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if d.criticality == 'EMERGENCY' %}
+                                            <span class="badge badge-emergency">EMERGENCY</span>
+                                        {% elif d.criticality == 'URGENT_I' %}
+                                            <span class="badge bg-danger text-white">Cat I - Urgent</span>
+                                        {% elif d.criticality == 'NORMAL_II' %}
+                                            <span class="badge bg-warning text-dark">Cat II - Cyclic</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Cat III - Routine</span>
+                                        {% endif %}
+                                        {% if d.overdue_days > 0 %}
+                                            <div class="small text-danger fw-bold mt-1">
+                                                <i class="fa-solid fa-clock me-1"></i> {{ d.overdue_days }}d overdue
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="text-dark small font-monospace">{{ d.duration_hours }} hrs</div>
+                                        {% if d.requires_power_block %}
+                                            <span class="badge badge-tdms small mt-1">
+                                                <i class="fa-solid fa-bolt me-1"></i> Power Block
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress bg-light border flex-grow-1" style="height: 6px; width: 60px;">
+                                                <div class="progress-bar {% if d.ai_priority_score >= 80 %}bg-danger{% elif d.ai_priority_score >= 60 %}bg-warning{% else %}bg-info{% endif %}" style="width: {{ d.ai_priority_score }}%;"></div>
+                                            </div>
+                                            <span class="fw-bold font-monospace small {% if d.ai_priority_score >= 80 %}text-danger{% elif d.ai_priority_score >= 60 %}text-warning{% else %}text-primary{% endif %}">
+                                                {{ d.ai_priority_score|floatformat:1 }}
+                                            </span>
+                                        </div>
+                                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">
+                                            {{ d.ai_urgency_notes|truncatechars:45 }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if d.status == 'BUNDLED' %}
+                                            <span class="badge badge-synergy">
+                                                <i class="fa-solid fa-bolt me-1"></i> Coordinated Bundled
+                                            </span>
+                                        {% elif d.status == 'SCHEDULED' %}
+                                            <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                                                <i class="fa-solid fa-calendar-check me-1"></i> Scheduled
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning">
+                                                <i class="fa-solid fa-hourglass-half me-1"></i> Pending AI Slot
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">No maintenance demands matching filters.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: COA Timetable & Goods Forecast -->
+        <div class="tab-pane fade" id="trains-pane">
+            <div class="row g-4">
+                <!-- Passenger Timetable -->
+                <div class="col-lg-7">
+                    <div class="card-rail">
+                        <div class="card-rail-header">
+                            <h5 class="card-rail-title">
+                                <i class="fa-solid fa-train text-warning"></i> COA Passenger Train Corridor Paths
+                            </h5>
+                            <span class="badge bg-secondary">{{ train_schedules|length }} Scheduled</span>
+                        </div>
+                        <div class="card-rail-body p-0">
+                            <div class="table-responsive">
+                                <table class="table-rail mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Train</th>
+                                            <th>Corridor & Line</th>
+                                            <th>Corridor Passage Time</th>
+                                            <th>Priority Rank</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for t in train_schedules %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ t.train_number }}</div>
+                                                <div class="small text-muted">{{ t.train_name }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="text-primary small fw-bold">{{ t.corridor.code }}</span>
+                                                <div class="small text-muted">{{ t.direction }} Line</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-monospace text-dark small">
+                                                    {{ t.entry_time|time:"H:i" }} → {{ t.exit_time|time:"H:i" }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if t.priority == 1 %}
+                                                    <span class="badge bg-danger text-white">P1 - Zero Detention</span>
+                                                {% elif t.priority == 2 %}
+                                                    <span class="badge bg-warning text-dark">P2 - Superfast</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">P{{ t.priority }} - Regular</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="4" class="text-center py-3 text-muted">No train schedules loaded.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goods Forecast -->
+                <div class="col-lg-5">
+                    <div class="card-rail">
+                        <div class="card-rail-header">
+                            <h5 class="card-rail-title">
+                                <i class="fa-solid fa-boxes-stacked text-primary"></i> COA Goods Trains Forecast
+                            </h5>
+                        </div>
+                        <div class="card-rail-body p-0">
+                            <div class="table-responsive">
+                                <table class="table-rail mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Rake ID</th>
+                                            <th>Commodity</th>
+                                            <th>Forecast Window</th>
+                                            <th>Regulation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for g in goods_forecasts %}
+                                        <tr>
+                                            <td class="font-monospace text-dark small fw-bold">{{ g.rake_id }}</td>
+                                            <td>
+                                                <span class="badge bg-light border text-dark">{{ g.get_commodity_display }}</span>
+                                                <div class="text-muted small">{{ g.tonnage }} Tonnes</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-monospace small text-dark">
+                                                    {{ g.target_window_start|time:"H:i" }} - {{ g.target_window_end|time:"H:i" }}
+                                                </div>
+                                                <div class="text-muted small">{{ g.corridor.code }} ({{ g.direction }})</div>
+                                            </td>
+                                            <td>
+                                                {% if g.can_be_regulated %}
+                                                    <span class="badge bg-success bg-opacity-25 text-success border border-success small">Loop Stabling OK</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger small">No Detention</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="4" class="text-center py-3 text-muted">No freight forecasts.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Machines & Fleet -->
+        <div class="tab-pane fade" id="machines-pane">
+            <div class="card-rail">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-truck-monster text-success"></i> Divisional Specialized Machinery & Tower Wagons
+                    </h5>
+                </div>
+                <div class="card-rail-body p-0">
+                    <div class="table-responsive">
+                        <table class="table-rail mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Machine ID</th>
+                                    <th>Equipment Model</th>
+                                    <th>Department</th>
+                                    <th>Base Machine Siding</th>
+                                    <th>Operational Readiness</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in machines %}
+                                <tr>
+                                    <td class="font-monospace fw-bold text-dark">{{ m.machine_id }}</td>
+                                    <td>
+                                        <div class="text-dark fw-bold small">{{ m.machine_name }}</div>
+                                        <div class="text-muted small">{{ m.get_machine_type_display }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if m.department == 'TMS' %}badge-tms{% elif m.department == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}">
+                                            {{ m.department }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted small">{{ m.base_depot }}</td>
+                                    <td>
+                                        {% if m.is_available %}
+                                            <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                                                <i class="fa-solid fa-circle-check me-1"></i> Available & Staged
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">
+                                                <i class="fa-solid fa-wrench me-1"></i> Depot Maintenance
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center py-3 text-muted">No machine records available.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

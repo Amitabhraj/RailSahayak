@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+
+{% block title %}Operations Dashboard | Rail-Sync AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Railway Infrastructure Operations Center</h2>
+            <p class="text-muted mb-0 small">
+                North Central Railway • Prayagraj Division • Automated Fixed Infrastructure Block Optimization
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light border px-3 py-2 text-primary">
+                <i class="fa-solid fa-code-branch me-1"></i> COA Timetable Synced
+            </span>
+            <span class="badge bg-light border px-3 py-2 text-success">
+                <i class="fa-solid fa-server me-1"></i> TMS/SMMS/TDMS Live
+            </span>
+        </div>
+    </div>
+
+    <!-- Row 1: KPI Metrics -->
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Downtime Saved -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card-rail kpi-card synergy p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="kpi-label">Downtime Eliminated</span>
+                    <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-success">{{ total_saved_hours }} <span class="fs-5 fw-normal text-muted">hrs</span></div>
+                <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+                    <i class="fa-solid fa-arrow-trend-down text-success"></i>
+                    <span>Saved via multi-department shadow blocks</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Asset Availability -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card-rail kpi-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="kpi-label">Asset Availability</span>
+                    <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-primary">{{ asset_availability }}%</div>
+                <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+                    <i class="fa-solid fa-shield-check text-primary"></i>
+                    <span>Fixed infrastructure operational readiness</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Synergy Rate -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card-rail kpi-card warning p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="kpi-label">Coordination Synergy</span>
+                    <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-warning">{{ synergy_rate }}%</div>
+                <div class="small text-muted mt-2">
+                    <span class="text-dark fw-bold">{{ coordinated_blocks_count }} of {{ total_blocks_count }}</span> blocks bundle 2+ departments
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Pending & Safety Alerts -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card-rail kpi-card danger p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="kpi-label">Overdue & TSRs</span>
+                    <div class="kpi-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-danger">{{ active_tsrs }} <span class="fs-5 fw-normal text-muted">TSRs</span></div>
+                <div class="small text-muted mt-2">
+                    <span class="text-danger fw-bold">{{ critical_overdue }}</span> critical safety demands pending
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Corridors & Alerts -->
+    <div class="row g-4 mb-4">
+        <!-- Corridors Status Table -->
+        <div class="col-lg-8">
+            <div class="card-rail h-100">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-road text-primary"></i> High-Density Corridor Matrix
+                    </h5>
+                    <a href="{% url 'data_hub' %}?tab=corridors" class="btn btn-outline-primary btn-sm">
+                        View Details <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-rail-body p-0">
+                    <div class="table-responsive">
+                        <table class="table-rail mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Corridor</th>
+                                    <th>Section Span</th>
+                                    <th>GMT & Speed</th>
+                                    <th>Daily Traffic</th>
+                                    <th>Maintenance Window</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for corr in corridors %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ corr.code }}</div>
+                                        <div class="small text-muted">{{ corr.name }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="text-dark small">km {{ corr.start_km|floatformat:1 }} - {{ corr.end_km|floatformat:1 }}</div>
+                                        <div class="text-muted small">{{ corr.get_line_type_display }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="text-dark fw-bold small">{{ corr.gmt }} GMT</div>
+                                        <div class="text-muted small">{{ corr.max_permissible_speed }} km/h MPS</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light border text-dark">{{ corr.daily_trains }} trains/day</span>
+                                    </td>
+                                    <td>
+                                        <div class="small text-primary fw-bold">
+                                            {{ corr.corridor_window_start|time:"H:i" }} - {{ corr.corridor_window_end|time:"H:i" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Synced
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No corridor data found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conflict Alerts & Safety Notices -->
+        <div class="col-lg-4">
+            <div class="card-rail h-100">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-bell text-warning"></i> Safety & Conflict Alerts
+                    </h5>
+                    <span class="badge bg-danger">{{ alerts|length }} Active</span>
+                </div>
+                <div class="card-rail-body p-3">
+                    {% for alert in alerts %}
+                    <div class="p-3 mb-3 rounded bg-light border {% if alert.severity == 'CRITICAL' %}border-danger{% else %}border-warning{% endif %}">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="badge {% if alert.severity == 'CRITICAL' %}badge-emergency{% else %}badge-smms{% endif %}">
+                                {{ alert.severity }}
+                            </span>
+                            <span class="small text-muted font-monospace">{{ alert.corridor.code }}</span>
+                        </div>
+                        <div class="fw-bold text-dark small mb-1">{{ alert.title }}</div>
+                        <p class="text-muted small mb-2">{{ alert.details|truncatechars:110 }}</p>
+                        <div class="p-2 rounded bg-light border text-dark small" style="font-size: 0.75rem;">
+                            <strong class="text-primary">AI Action:</strong> {{ alert.suggested_action }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-check-circle text-success fs-1 mb-2"></i>
+                        <div class="text-dark fw-bold">No Active Timetable Clashes</div>
+                        <div class="small text-muted">All scheduled blocks safely slotted into COA low-density windows.</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Upcoming AI Scheduled Blocks & Department Distribution -->
+    <div class="row g-4">
+        <!-- Upcoming Scheduled Blocks -->
+        <div class="col-lg-8">
+            <div class="card-rail">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-calendar-check text-success"></i> Upcoming AI Optimized Block Plans
+                    </h5>
+                    <a href="{% url 'master_schedule' %}" class="btn btn-rail-primary btn-sm">
+                        Open Full Gantt View <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-rail-body p-0">
+                    <div class="table-responsive">
+                        <table class="table-rail mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Block ID & Date</th>
+                                    <th>Corridor & Line</th>
+                                    <th>Slot Time</th>
+                                    <th>Coordinated Departments</th>
+                                    <th>Downtime Saved</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for block in upcoming_blocks %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark font-monospace">{{ block.block_id }}</div>
+                                        <div class="small text-muted">{{ block.scheduled_date|date:"D, d M Y" }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="text-primary fw-bold">{{ block.corridor.code }}</span>
+                                        <div class="small text-muted">{{ block.track_line }} Line (km {{ block.km_start|floatformat:1 }}-{{ block.km_end|floatformat:1 }})</div>
+                                    </td>
+                                    <td>
+                                        <div class="font-monospace text-dark small">
+                                            {{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}
+                                        </div>
+                                        <div class="text-muted small">Duration: {{ block.duration_hours }}h</div>
+                                    </td>
+                                    <td>
+                                        {% if block.is_coordinated %}
+                                            <span class="badge badge-synergy py-1 px-2">
+                                                <i class="fa-solid fa-bolt me-1"></i> {{ block.participating_departments }}
+                                            </span>
+                                            <div class="small text-muted mt-1">{{ block.total_activities_count }} joint activities</div>
+                                        {% else %}
+                                            <span class="badge {% if block.primary_department == 'TMS' %}badge-tms{% elif block.primary_department == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}">
+                                                {{ block.primary_department }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if block.estimated_downtime_saved_minutes > 0 %}
+                                            <span class="text-success fw-bold font-monospace">+{{ block.estimated_downtime_saved_minutes }} mins</span>
+                                            <div class="small text-muted">Saved by bundling</div>
+                                        {% else %}
+                                            <span class="text-muted small">Single task</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light border text-primary">
+                                            {{ block.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No upcoming blocks scheduled. Click 'Run AI Optimizer' to generate blocks.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Queue Breakdown -->
+        <div class="col-lg-4">
+            <div class="card-rail">
+                <div class="card-rail-header">
+                    <h5 class="card-rail-title">
+                        <i class="fa-solid fa-layer-group text-primary"></i> Department Ingestion Queue
+                    </h5>
+                    <a href="{% url 'department_portal' %}" class="btn btn-outline-primary btn-sm">BDMS Portal</a>
+                </div>
+                <div class="card-rail-body">
+                    <!-- TMS -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-dark small fw-bold">
+                                <i class="fa-solid fa-wrench text-info me-1"></i> TMS (Civil / P-Way)
+                            </span>
+                            <span class="badge badge-tms">{{ tms_count }} demands</span>
+                        </div>
+                        <div class="progress bg-light border" style="height: 8px;">
+                            <div class="progress-bar bg-info" style="width: 45%;"></div>
+                        </div>
+                        <div class="small text-muted mt-1">Rail renewals, deep screening, track tamping</div>
+                    </div>
+
+                    <!-- SMMS -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-dark small fw-bold">
+                                <i class="fa-solid fa-traffic-light text-warning me-1"></i> SMMS (Signal & Telecom)
+                            </span>
+                            <span class="badge badge-smms">{{ smms_count }} demands</span>
+                        </div>
+                        <div class="progress bg-light border" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: 30%;"></div>
+                        </div>
+                        <div class="small text-muted mt-1">Point machines, track circuits, EI overhauls</div>
+                    </div>
+
+                    <!-- TDMS -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-dark small fw-bold">
+                                <i class="fa-solid fa-bolt text-purple me-1" style="color: #7e22ce;"></i> TDMS (Traction / OHE)
+                            </span>
+                            <span class="badge badge-tdms">{{ tdms_count }} demands</span>
+                        </div>
+                        <div class="progress bg-light border" style="height: 8px;">
+                            <div class="progress-bar" style="background-color: #7e22ce; width: 25%;"></div>
+                        </div>
+                        <div class="small text-muted mt-1">25kV contact wire, cantilevers, tower wagon blocks</div>
+                    </div>
+
+                    <hr class="border-secondary my-3">
+                    <div class="p-3 rounded bg-light border text-muted small">
+                        <strong class="text-success"><i class="fa-solid fa-lightbulb me-1"></i> Shadow Block Principle:</strong>
+                        Whenever a primary track or power block is granted, Rail-Sync AI automatically pulls overlapping S&T and TRD tasks into the same window, eliminating repeated track closures.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

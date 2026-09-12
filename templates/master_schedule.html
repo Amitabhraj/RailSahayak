@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Master Block Schedule & Gantt | Rail-Sync AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Master Infrastructure Block Schedule</h2>
+            <p class="text-muted mb-0 small">
+                Coordinated Multi-Department Corridor Slots Synchronized with Train Control Office (COA)
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <i class="fa-solid fa-print me-1"></i> Print / Export Program
+            </button>
+            <button type="button" class="btn btn-rail-synergy btn-sm" data-bs-toggle="modal" data-bs-target="#runOptimizerModal">
+                <i class="fa-solid fa-bolt me-1"></i> Re-Optimize Schedule
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card-rail mb-4">
+        <div class="card-rail-body p-3">
+            <form method="GET" class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label text-dark small fw-bold mb-1">Time Horizon</label>
+                    <select name="horizon" class="form-select form-select-sm form-select-rail" onchange="this.form.submit()">
+                        <option value="WEEKLY" {% if horizon_filter == 'WEEKLY' %}selected{% endif %}>Weekly Operational (7 Days)</option>
+                        <option value="MONTHLY" {% if horizon_filter == 'MONTHLY' %}selected{% endif %}>Monthly Strategic (30 Days)</option>
+                        <option value="ALL" {% if horizon_filter == 'ALL' %}selected{% endif %}>All Horizons</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label text-dark small fw-bold mb-1">Corridor Section</label>
+                    <select name="corridor" class="form-select form-select-sm form-select-rail" onchange="this.form.submit()">
+                        <option value="ALL" {% if corridor_filter == 'ALL' %}selected{% endif %}>All Corridors</option>
+                        {% for c in corridors %}
+                        <option value="{{ c.code }}" {% if corridor_filter == c.code %}selected{% endif %}>{{ c.code }} - {{ c.name|truncatechars:25 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label text-dark small fw-bold mb-1">Department</label>
+                    <select name="dept" class="form-select form-select-sm form-select-rail" onchange="this.form.submit()">
+                        <option value="ALL" {% if dept_filter == 'ALL' %}selected{% endif %}>All Departments</option>
+                        <option value="TMS" {% if dept_filter == 'TMS' %}selected{% endif %}>TMS (Civil/Track)</option>
+                        <option value="SMMS" {% if dept_filter == 'SMMS' %}selected{% endif %}>SMMS (Signal/S&T)</option>
+                        <option value="TDMS" {% if dept_filter == 'TDMS' %}selected{% endif %}>TDMS (TRD/OHE)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end justify-content-end">
+                    <div class="text-end">
+                        <span class="badge badge-synergy px-3 py-2">
+                            <i class="fa-solid fa-link me-1"></i> {{ coordinated_count }} Bundled Blocks
+                        </span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 1: Visual 24-Hour Corridor Gantt / Timeline -->
+    <div class="card-rail mb-4">
+        <div class="card-rail-header flex-wrap gap-2">
+            <h5 class="card-rail-title">
+                <i class="fa-solid fa-chart-gantt text-primary"></i> Interactive Corridor Timeline (24-Hour Slots)
+            </h5>
+            <div class="d-flex align-items-center gap-3 small text-muted">
+                <span class="d-flex align-items-center gap-1"><span class="badge badge-synergy p-1"></span> Coordinated Shadow Block</span>
+                <span class="d-flex align-items-center gap-1"><span class="badge badge-tms p-1"></span> TMS (Track)</span>
+                <span class="d-flex align-items-center gap-1"><span class="badge badge-smms p-1"></span> SMMS (Signal)</span>
+                <span class="d-flex align-items-center gap-1"><span class="badge badge-tdms p-1"></span> TDMS (OHE)</span>
+            </div>
+        </div>
+
+        <div class="card-rail-body p-3">
+            <div class="gantt-container">
+                <!-- 24 Hour Header -->
+                <div class="gantt-header">
+                    <div class="fw-bold text-start ps-3">Corridor & Date</div>
+                    {% for h in "012345678901234567890123"|make_list %}
+                    <div>{{ forloop.counter0|stringformat:"02d" }}:00</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Rows per date & corridor -->
+                {% for d_str, day_blocks in dates_grouped.items %}
+                    {% for block in day_blocks %}
+                    <div class="gantt-row">
+                        <div class="gantt-corridor-label">
+                            <div class="text-dark fw-bold">{{ block.corridor.code }}</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">{{ block.scheduled_date|date:"d M" }} • {{ block.track_line }} Line</div>
+                        </div>
+
+                        <!-- 24-Hour grid background stripes -->
+                        {% for h in "012345678901234567890123"|make_list %}
+                        <div style="border-right: 1px dashed #cbd5e1; height: 100%;"></div>
+                        {% endfor %}
+
+                        <!-- Block Capsule overlay -->
+                        <!-- Calculate visual percentage positioning based on start_time and duration -->
+                        <div class="gantt-block-pill {% if block.is_coordinated %}badge-synergy{% elif block.primary_department == 'TMS' %}badge-tms{% elif block.primary_department == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}"
+                             style="left: calc(200px + ({{ block.start_time.hour }} + {{ block.start_time.minute }}/60) * ((100% - 200px) / 24)); 
+                                    width: calc({{ block.duration_hours }} * ((100% - 200px) / 24));"
+                             title="{{ block.block_id }} ({{ block.start_time|time:'H:i' }}-{{ block.end_time|time:'H:i' }}) {{ block.participating_departments }}"
+                             onclick="showBlockModal('{{ block.block_id }}', '{{ block.corridor.code }}', '{{ block.scheduled_date|date:'d M Y' }}', '{{ block.start_time|time:'H:i' }} - {{ block.end_time|time:'H:i' }}', '{{ block.duration_hours }} hrs', '{{ block.track_line }} Line (km {{ block.km_start|floatformat:1 }} to {{ block.km_end|floatformat:1 }})', '{{ block.participating_departments }}', '{{ block.estimated_downtime_saved_minutes }} mins', '{{ block.primary_demand.activity_name|escapejs }}', '{{ block.ai_optimization_notes|escapejs }}')">
+                            <div class="fw-bold" style="font-size: 0.72rem;">{{ block.block_id }}</div>
+                            <div style="font-size: 0.65rem;" class="opacity-90">
+                                {% if block.is_coordinated %}<i class="fa-solid fa-bolt"></i>{% endif %}
+                                {{ block.participating_departments }} ({{ block.start_time|time:"H:i" }}-{{ block.end_time|time:"H:i" }})
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-calendar-xmark fs-2 mb-2"></i>
+                    <div>No scheduled blocks match current criteria.</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Master Program Table -->
+    <div class="card-rail">
+        <div class="card-rail-header">
+            <h5 class="card-rail-title">
+                <i class="fa-solid fa-list-check text-primary"></i> Master Program Table (Detailed Activities)
+            </h5>
+            <span class="badge bg-secondary">{{ total_scheduled }} Blocks Active</span>
+        </div>
+        <div class="card-rail-body p-0">
+            <div class="table-responsive">
+                <table class="table-rail mb-0">
+                    <thead>
+                        <tr>
+                            <th>Block ID & Date</th>
+                            <th>Corridor & KM Range</th>
+                            <th>Time Window</th>
+                            <th>Primary & Shadow Activities</th>
+                            <th>Departments Involved</th>
+                            <th>Downtime Eliminated</th>
+                            <th>COA Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in blocks %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold font-monospace text-dark">{{ b.block_id }}</div>
+                                <div class="text-muted small">{{ b.scheduled_date|date:"D, d M Y" }}</div>
+                            </td>
+                            <td>
+                                <span class="text-primary fw-bold">{{ b.corridor.code }}</span>
+                                <div class="text-dark small">{{ b.track_line }} Line (km {{ b.km_start|floatformat:1 }} - {{ b.km_end|floatformat:1 }})</div>
+                            </td>
+                            <td>
+                                <div class="font-monospace text-dark small fw-bold">
+                                    {{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}
+                                </div>
+                                <div class="text-muted small">{{ b.duration_hours }} hrs duration</div>
+                            </td>
+                            <td style="max-width: 320px;">
+                                <div class="small fw-bold text-dark">
+                                    <i class="fa-solid fa-play text-primary me-1" style="font-size: 0.65rem;"></i> {{ b.primary_demand.activity_name }}
+                                </div>
+                                {% for bundled in b.bundled_demands.all %}
+                                <div class="small text-muted mt-1 ps-2 border-start border-success">
+                                    <strong class="text-success">[Shadow]</strong> {{ bundled.activity_name }} ({{ bundled.source_system }})
+                                </div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if b.is_coordinated %}
+                                    <span class="badge badge-synergy py-1 px-2">
+                                        <i class="fa-solid fa-bolt me-1"></i> {{ b.participating_departments }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge {% if b.primary_department == 'TMS' %}badge-tms{% elif b.primary_department == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}">
+                                        {{ b.primary_department }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.estimated_downtime_saved_minutes > 0 %}
+                                    <span class="text-success fw-bold font-monospace">+{{ b.estimated_downtime_saved_minutes }} mins</span>
+                                    <div class="small text-muted">Saved by shadow bundling</div>
+                                {% else %}
+                                    <span class="text-muted small">0 mins (Single task)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                                    {{ b.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No scheduled blocks found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Block Details Popup -->
+<div class="modal fade" id="blockDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rail-modal">
+            <div class="modal-header rail-modal-header">
+                <h5 class="modal-title text-white" id="modalBlockTitle">Block Schedule Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="modalBlockBody">
+                <!-- Dynamically populated via JS -->
+            </div>
+            <div class="modal-footer rail-modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showBlockModal(id, corridor, date, time, duration, section, depts, saved, primaryAct, notes) {
+    const titleEl = document.getElementById('modalBlockTitle');
+    const bodyEl = document.getElementById('modalBlockBody');
+    
+    titleEl.innerHTML = `<i class="fa-solid fa-calendar-check text-warning me-2"></i> ${id} — ${corridor}`;
+    bodyEl.innerHTML = `
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <div class="p-3 rounded bg-light border">
+                    <div class="text-muted small">Date & Slot</div>
+                    <div class="fw-bold text-dark">${date} • ${time} (${duration})</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 rounded bg-light border">
+                    <div class="text-muted small">Track Span & Line</div>
+                    <div class="fw-bold text-dark">${section}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="text-muted small mb-1">Participating Departments & Bundling</div>
+            <span class="badge badge-synergy px-3 py-2 fs-6 mb-2">
+                <i class="fa-solid fa-bolt me-1"></i> ${depts}
+            </span>
+            <div class="text-success small fw-bold">Downtime Eliminated: ${saved}</div>
+        </div>
+
+        <div class="mb-3">
+            <div class="text-muted small mb-1">Primary Activity</div>
+            <div class="p-2 rounded bg-light border text-dark small">${primaryAct}</div>
+        </div>
+
+        <div class="p-3 rounded bg-light border border-primary text-muted small">
+            <div class="text-primary fw-bold mb-1"><i class="fa-solid fa-brain me-1"></i> AI Optimization Reasoning:</div>
+            ${notes}
+        </div>
+    `;
+
+    const modal = new bootstrap.Modal(document.getElementById('blockDetailModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

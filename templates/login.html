@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operations Login | Rail-Sync AI</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Rail CSS -->
+    <link rel="stylesheet" href="{% static 'css/rail_style.css' %}">
+</head>
+<body class="login-page">
+
+<div class="login-card">
+    <!-- Top Header Banner -->
+    <div class="p-4 text-center border-bottom bg-white">
+        <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle text-white mb-2" style="width: 60px; height: 60px; background-color: #213d77;">
+            <i class="fa-solid fa-train-subway fs-3"></i>
+        </div>
+        <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.01em;">RAIL-SYNC AI</h3>
+        <p class="text-muted small mb-0">Automatic Multi-Department Railway Block Planning System</p>
+        <div class="mt-2">
+            <span class="badge bg-light border text-primary small">
+                <i class="fa-solid fa-server me-1"></i> Indian Railways Control Gateway
+            </span>
+        </div>
+    </div>
+
+    <div class="p-4 bg-white">
+        {% if error_message %}
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>{{ error_message }}</div>
+        </div>
+        {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} d-flex align-items-center gap-2 py-2 px-3 mb-3 small" role="alert">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>{{ message }}</div>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Login Form -->
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label text-dark small fw-bold">Username / Employee ID</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border text-primary"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" name="username" id="loginUsername" class="form-control form-control-rail" placeholder="Enter username" required autofocus>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label text-dark small fw-bold mb-0">Password</label>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border text-primary"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" name="password" id="loginPassword" class="form-control form-control-rail" placeholder="Enter password" required>
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility()"><i class="fa-solid fa-eye" id="pwdEyeIcon"></i></button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-rail-primary w-100 py-2 mb-3">
+                <i class="fa-solid fa-right-to-bracket me-2"></i> Access Operations Center
+            </button>
+        </form>
+
+        <!-- Demo Credentials Quick Fill -->
+        <div class="p-3 rounded bg-light border mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-dark small fw-bold"><i class="fa-solid fa-bolt text-warning me-1"></i> Instant Demo Logins:</span>
+                <span class="text-muted" style="font-size: 0.72rem;">Click to Auto-Fill</span>
+            </div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="p-2 demo-chip" onclick="fillCredentials('tms_engineer', 'rail123')">
+                        <strong class="text-primary d-block">🛠️ TMS Engineer</strong>
+                        <span class="text-muted small">Civil / P-Way</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 demo-chip" onclick="fillCredentials('smms_engineer', 'rail123')">
+                        <strong class="text-warning d-block" style="color: #b45309 !important;">🚦 SMMS Officer</strong>
+                        <span class="text-muted small">Signal & Telecom</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 demo-chip" onclick="fillCredentials('tdms_engineer', 'rail123')">
+                        <strong class="d-block" style="color: #7e22ce;">⚡ TDMS Engineer</strong>
+                        <span class="text-muted small">Traction OHE</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 demo-chip" onclick="fillCredentials('admin', 'admin123')">
+                        <strong class="text-success d-block">🎛️ Chief Controller</strong>
+                        <span class="text-muted small">COA Operations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Link -->
+        <div class="text-center text-muted small">
+            New field engineer or operating controller?
+            <a href="{% url 'signup' %}" class="text-primary fw-bold text-decoration-none ms-1">Register Portal Account</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillCredentials(user, pwd) {
+    document.getElementById('loginUsername').value = user;
+    document.getElementById('loginPassword').value = pwd;
+}
+
+function togglePasswordVisibility() {
+    const pwdInput = document.getElementById('loginPassword');
+    const eye = document.getElementById('pwdEyeIcon');
+    if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        eye.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        pwdInput.type = 'password';
+        eye.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>
+
+</body>
+</html>

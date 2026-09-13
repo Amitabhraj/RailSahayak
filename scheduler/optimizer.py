@@ -1,5 +1,5 @@
 """
-Rail-Sync AI Optimization Engine
+RAIL-SAHAYAK Optimization Engine
 Provides:
 1. Multi-factor Criticality & Urgency Scoring
 2. Spatial-Temporal Co-located Multi-Department Shadow Block Bundler

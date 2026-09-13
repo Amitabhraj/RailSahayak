@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Rail-Sync AI | Automatic Block Planning & Multi-Dept Optimizer{% endblock %}</title>
+    <title>{% block title %}RAIL-SAHAYAK | Automatic Block Planning & Multi-Dept Optimizer{% endblock %}</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
@@ -26,7 +26,7 @@
                     <i class="fa-solid fa-train-subway"></i>
                 </div>
                 <div>
-                    <div class="brand-title">RAIL-SYNC AI</div>
+                    <div class="brand-title">RAIL-SAHAYAK</div>
                     <div class="brand-subtitle">Automatic Block Planner</div>
                 </div>
             </a>
@@ -83,7 +83,7 @@
                 <span class="badge bg-primary">COA v4.2</span>
             </div>
             <div class="text-dark">TMS • SMMS • TDMS Sync</div>
-            <div class="text-primary fw-bold mt-1">NCR / Prayagraj Div</div>
+            <div class="text-primary fw-bold mt-1">Zone: {{ active_zones_label|default:"All Zones" }}</div>
         </div>
     </aside>
 
@@ -105,6 +105,16 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
+                <!-- Active Zone Selector Badge & Switcher Button -->
+                {% if user.is_authenticated %}
+                <a href="{% url 'zone_selection' %}" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 me-1" title="Switch or select railway operational zones">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span class="d-none d-md-inline small">Zone:</span>
+                    <span class="badge bg-primary text-white" style="font-size: 0.72rem;">{{ active_zones_label|default:"All Zones" }}</span>
+                    <i class="fa-solid fa-arrow-right-arrow-left ms-1 text-muted" style="font-size: 0.7rem;"></i>
+                </a>
+                {% endif %}
+
                 <!-- Trigger AI Optimization Button -->
                 <button type="button" class="btn btn-rail-synergy btn-sm" data-bs-toggle="modal" data-bs-target="#runOptimizerModal">
                     <i class="fa-solid fa-bolt me-1"></i> Run AI Optimizer
@@ -207,7 +217,7 @@
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted small">
-                    Simulate a sudden real-time railway emergency (e.g. Broken Rail or OHE catenary drop) to test how <strong>Rail-Sync AI</strong> dynamically preempts low-priority blocks, inserts an immediate emergency repair slot, and prevents domino cascade failures.
+                    Simulate a sudden real-time railway emergency (e.g. Broken Rail or OHE catenary drop) to test how <strong>RAIL-SAHAYAK</strong> dynamically preempts low-priority blocks, inserts an immediate emergency repair slot, and prevents domino cascade failures.
                 </p>
 
                 <div class="mb-3">

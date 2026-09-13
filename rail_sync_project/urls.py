@@ -26,7 +26,8 @@ urlpatterns = [
     path('department-portal/', views.department_portal_view, name='department_portal'),
     path('analytics/', views.analytics_view, name='analytics'),
     
-    # Authentication Routes
+    # Authentication & Zone Selection Routes
+    path('select-zone/', views.zone_selection_view, name='zone_selection'),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),

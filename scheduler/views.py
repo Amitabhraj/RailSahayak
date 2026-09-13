@@ -41,21 +41,88 @@ def login_required_404(view_func):
     return _wrapped_view
 
 
+def get_active_zones(request):
+    """
+    Returns the queryset of active Zones selected in the user's session.
+    If no zones are set, returns None so view can redirect to zone_selection.
+    """
+    zone_ids = request.session.get('selected_zone_ids')
+    if not zone_ids:
+        return None
+    return Zone.objects.filter(id__in=zone_ids)
+
+
+@login_required_404
+def zone_selection_view(request):
+    """
+    Post-Login Railway Operational Zone Selection:
+    Displays all railway zones dynamically loaded from the database.
+    Supports single, multiple, and 'Select All' options.
+    Stores the active selection in request.session['selected_zone_ids'].
+    """
+    all_zones = Zone.objects.all().prefetch_related('divisions__corridors')
+    # By default, do not pre-select any zone
+    current_selected_ids = request.session.get('selected_zone_ids', [])
+
+    error_message = None
+
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('selected_zones')
+        valid_ids = []
+        for sid in selected_ids:
+            try:
+                valid_ids.append(int(sid))
+            except ValueError:
+                pass
+
+        if not valid_ids:
+            error_message = "Please select at least one railway zone to proceed."
+        else:
+            request.session['selected_zone_ids'] = valid_ids
+            next_url = request.GET.get('next') or 'dashboard'
+            return redirect(next_url)
+
+    zones_data = []
+    for z in all_zones:
+        div_count = z.divisions.count()
+        corridor_count = sum(d.corridors.count() for d in z.divisions.all())
+        demand_count = MaintenanceDemand.objects.filter(corridor__division__zone=z).count()
+        zones_data.append({
+            'id': z.id,
+            'code': z.code,
+            'name': z.name,
+            'divisions_count': div_count,
+            'corridors_count': corridor_count,
+            'demands_count': demand_count,
+            'is_selected': z.id in current_selected_ids,
+        })
+
+    context = {
+        'zones': zones_data,
+        'error_message': error_message,
+    }
+    return render(request, 'zone_selection.html', context)
+
+
 @login_required_404
 def dashboard_view(request):
     """
     Executive Operations Center Dashboard:
     Summarizes high-level KPIs, corridor statuses, pending vs scheduled demands,
-    synergy rate, total downtime saved, and active conflict alerts.
+    synergy rate, total downtime saved, and active conflict alerts for SELECTED ZONES.
     """
-    corridors = Corridor.objects.all().prefetch_related('scheduled_blocks', 'maintenance_demands')
-    total_demands = MaintenanceDemand.objects.count()
-    pending_demands = MaintenanceDemand.objects.filter(status__in=['PENDING', 'AI_RECOMMENDED', 'DEFERRED']).count()
-    scheduled_demands = MaintenanceDemand.objects.filter(status__in=['SCHEDULED', 'BUNDLED']).count()
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
+    corridors = Corridor.objects.filter(division__zone__in=active_zones).prefetch_related('scheduled_blocks', 'maintenance_demands')
+    total_demands = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones).count()
+    pending_demands = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, status__in=['PENDING', 'AI_RECOMMENDED', 'DEFERRED']).count()
+    scheduled_demands = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, status__in=['SCHEDULED', 'BUNDLED']).count()
     
     # Calculate savings and coordination statistics
     latest_run = OptimizationRun.objects.first()
-    blocks = BlockSchedule.objects.all()
+    blocks = BlockSchedule.objects.filter(corridor__division__zone__in=active_zones)
     total_blocks_count = blocks.count()
     coordinated_blocks_count = blocks.filter(is_coordinated=True).count()
     
@@ -66,18 +133,18 @@ def dashboard_view(request):
     asset_availability = latest_run.asset_availability_score if latest_run else 98.4
 
     # Alerts & active speed restrictions
-    alerts = ConflictAlert.objects.filter(is_resolved=False)[:5]
-    active_tsrs = MaintenanceDemand.objects.filter(speed_restriction_imposed=True).count()
-    critical_overdue = MaintenanceDemand.objects.filter(Q(criticality='EMERGENCY') | Q(overdue_days__gt=5)).count()
+    alerts = ConflictAlert.objects.filter(corridor__division__zone__in=active_zones, is_resolved=False)[:5]
+    active_tsrs = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, speed_restriction_imposed=True).count()
+    critical_overdue = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones).filter(Q(criticality='EMERGENCY') | Q(overdue_days__gt=5)).count()
 
     # Upcoming blocks for next 3 days
     today = timezone.now().date()
-    upcoming_blocks = BlockSchedule.objects.filter(scheduled_date__gte=today).order_by('scheduled_date', 'start_time')[:6]
+    upcoming_blocks = blocks.filter(scheduled_date__gte=today).order_by('scheduled_date', 'start_time')[:6]
 
     # Department demand counts
-    tms_count = MaintenanceDemand.objects.filter(source_system='TMS').count()
-    smms_count = MaintenanceDemand.objects.filter(source_system='SMMS').count()
-    tdms_count = MaintenanceDemand.objects.filter(source_system='TDMS').count()
+    tms_count = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system='TMS').count()
+    smms_count = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system='SMMS').count()
+    tdms_count = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system='TDMS').count()
 
     context = {
         'corridors': corridors,
@@ -106,14 +173,18 @@ def data_hub_view(request):
     """
     Integrated Data Hub:
     Displays raw and prioritized data feeds from TMS (Track), SMMS (S&T), TDMS (OHE),
-    plus COA Passenger Timetable & Goods Forecasts.
+    plus COA Passenger Timetable & Goods Forecasts for SELECTED ZONES.
     """
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
     tab = request.GET.get('tab', 'demands')
     dept_filter = request.GET.get('dept', 'ALL')
     corridor_filter = request.GET.get('corridor', 'ALL')
     search_query = request.GET.get('q', '').strip()
 
-    demands_qs = MaintenanceDemand.objects.all().select_related('corridor', 'assigned_machine')
+    demands_qs = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones).select_related('corridor', 'assigned_machine')
     if dept_filter != 'ALL':
         demands_qs = demands_qs.filter(source_system=dept_filter)
     if corridor_filter != 'ALL':
@@ -125,11 +196,15 @@ def data_hub_view(request):
             Q(defect_description__icontains=search_query)
         )
 
-    # Corridors & machines
-    corridors = Corridor.objects.all()
+    # Corridors & machines in selected zones
+    corridors = Corridor.objects.filter(division__zone__in=active_zones)
     machines = MachineAsset.objects.all()
-    train_schedules = TrainSchedule.objects.all().select_related('corridor')
-    goods_forecasts = GoodsForecast.objects.all().select_related('corridor')
+    train_schedules = TrainSchedule.objects.filter(corridor__division__zone__in=active_zones).select_related('corridor')
+    goods_forecasts = GoodsForecast.objects.filter(corridor__division__zone__in=active_zones).select_related('corridor')
+
+    total_tms = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system='TMS').count()
+    total_smms = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system='SMMS').count()
+    total_tdms = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system='TDMS').count()
 
     context = {
         'tab': tab,
@@ -141,9 +216,9 @@ def data_hub_view(request):
         'machines': machines,
         'train_schedules': train_schedules,
         'goods_forecasts': goods_forecasts,
-        'total_tms': MaintenanceDemand.objects.filter(source_system='TMS').count(),
-        'total_smms': MaintenanceDemand.objects.filter(source_system='SMMS').count(),
-        'total_tdms': MaintenanceDemand.objects.filter(source_system='TDMS').count(),
+        'total_tms': total_tms,
+        'total_smms': total_smms,
+        'total_tdms': total_tdms,
     }
     return render(request, 'data_hub.html', context)
 
@@ -153,20 +228,24 @@ def optimizer_studio_view(request):
     """
     AI Optimization Studio & What-If Simulation:
     Allows running AI algorithms with custom parameters, inspecting Before-vs-After AI metrics,
-    and simulating emergency track defect injection.
+    and simulating emergency track defect injection for SELECTED ZONES.
     """
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
     latest_run = OptimizationRun.objects.first()
     runs_history = OptimizationRun.objects.all()[:8]
-    corridors = Corridor.objects.all()
+    corridors = Corridor.objects.filter(division__zone__in=active_zones)
     
-    # Calculate Before vs After AI comparison metrics
-    blocks = BlockSchedule.objects.all()
+    # Calculate Before vs After AI comparison metrics for active zones
+    blocks = BlockSchedule.objects.filter(corridor__division__zone__in=active_zones)
     total_blocks = blocks.count()
     coordinated_blocks = blocks.filter(is_coordinated=True).count()
     
-    # In manual decentralized planning, each task took a separate block:
-    manual_blocks_count = MaintenanceDemand.objects.filter(status__in=['SCHEDULED', 'BUNDLED']).count()
-    manual_total_hours = sum(d.duration_hours for d in MaintenanceDemand.objects.filter(status__in=['SCHEDULED', 'BUNDLED']))
+    zone_demands = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones)
+    manual_blocks_count = zone_demands.filter(status__in=['SCHEDULED', 'BUNDLED']).count()
+    manual_total_hours = sum(d.duration_hours for d in zone_demands.filter(status__in=['SCHEDULED', 'BUNDLED']))
     ai_total_hours = sum(b.duration_hours for b in blocks)
     downtime_saved_hours = max(0.0, round(manual_total_hours - ai_total_hours, 1))
 
@@ -188,14 +267,17 @@ def optimizer_studio_view(request):
 def master_schedule_view(request):
     """
     Master Schedule & Interactive Gantt Timeline:
-    Displays scheduled blocks across Weekly and Monthly horizons, highlighting
-    multi-department bundling synergies, train clashes, and time-slot spans.
+    Displays scheduled blocks across Weekly and Monthly horizons for SELECTED ZONES.
     """
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
     horizon_filter = request.GET.get('horizon', 'WEEKLY')
     corridor_filter = request.GET.get('corridor', 'ALL')
     dept_filter = request.GET.get('dept', 'ALL')
 
-    blocks_qs = BlockSchedule.objects.all().select_related('corridor', 'primary_demand').prefetch_related('bundled_demands')
+    blocks_qs = BlockSchedule.objects.filter(corridor__division__zone__in=active_zones).select_related('corridor', 'primary_demand').prefetch_related('bundled_demands')
     if horizon_filter != 'ALL':
         blocks_qs = blocks_qs.filter(horizon=horizon_filter)
     if corridor_filter != 'ALL':
@@ -206,7 +288,7 @@ def master_schedule_view(request):
             Q(participating_departments__icontains=dept_filter)
         )
 
-    corridors = Corridor.objects.all()
+    corridors = Corridor.objects.filter(division__zone__in=active_zones)
     
     # Group blocks by date for timeline/gantt display
     dates_grouped = {}
@@ -233,12 +315,16 @@ def master_schedule_view(request):
 def department_portal_view(request):
     """
     Department Block Demanding Portal (BDMS Integration):
-    Allows field engineers of TMS, SMMS, and TDMS to file block requests,
-    view real-time AI conflict analysis, and discover co-located shadow block opportunities.
+    Allows field engineers of TMS, SMMS, and TDMS to file block requests and view
+    demands within SELECTED ZONES.
     """
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
     dept = request.GET.get('dept', 'TMS')
-    demands = MaintenanceDemand.objects.filter(source_system=dept).select_related('corridor', 'assigned_machine')
-    corridors = Corridor.objects.all()
+    demands = MaintenanceDemand.objects.filter(corridor__division__zone__in=active_zones, source_system=dept).select_related('corridor', 'assigned_machine')
+    corridors = Corridor.objects.filter(division__zone__in=active_zones)
     machines = MachineAsset.objects.filter(department=dept)
 
     context = {
@@ -254,11 +340,15 @@ def department_portal_view(request):
 def analytics_view(request):
     """
     Analytics & Asset Downtime Reduction Metrics:
-    Visual charts and breakdown of availability %, downtime saved per corridor,
-    multi-department cooperation index, and train punctuality safety margins.
+    Visual charts and breakdown of availability %, downtime saved per corridor
+    within SELECTED ZONES.
     """
-    corridors = Corridor.objects.all()
-    blocks = BlockSchedule.objects.all()
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
+    corridors = Corridor.objects.filter(division__zone__in=active_zones)
+    blocks = BlockSchedule.objects.filter(corridor__division__zone__in=active_zones)
     
     # Per corridor breakdown
     corridor_stats = []
@@ -499,6 +589,7 @@ def login_view(request):
     """
     Railway Operations Authentication Login:
     Authenticates field engineers & operating controllers against Django integrated database.
+    Immediately redirects to Zone Selection upon successful login.
     """
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -511,8 +602,8 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            next_url = request.GET.get('next') or 'dashboard'
-            return redirect(next_url)
+            request.session.pop('selected_zone_ids', None)
+            return redirect('zone_selection')
         else:
             error_message = "Invalid Indian Railways portal credentials. Please check your username and password."
 
@@ -523,6 +614,7 @@ def signup_view(request):
     """
     Department Staff Registration:
     Creates user account and associates UserProfile with department (TMS, SMMS, TDMS, COA).
+    Immediately redirects to Zone Selection upon successful registration.
     """
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -567,7 +659,8 @@ def signup_view(request):
                 division=div
             )
             login(request, user)
-            return redirect('dashboard')
+            request.session.pop('selected_zone_ids', None)
+            return redirect('zone_selection')
 
     return render(request, 'signup.html', {
         'error_message': error_message,
@@ -579,6 +672,7 @@ def logout_view(request):
     """
     Safely terminates session and redirects to login.
     """
+    request.session.pop('selected_zone_ids', None)
     logout(request)
     return redirect('login')
 

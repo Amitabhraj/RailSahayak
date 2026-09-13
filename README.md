@@ -1,13 +1,13 @@
-# Rail-Sync AI: Automatic Multi-Department Railway Infrastructure Block Planning System
+# RAIL-SAHAYAK: Automatic Multi-Department Railway Infrastructure Block Planning System
 
-**Rail-Sync AI** is an intelligent, integrated railway maintenance block planning and scheduling platform built with **Django**, **HTML5/CSS3/JavaScript**, and **Constraint Satisfaction AI Algorithms**.
+**RAIL-SAHAYAK** is an intelligent, integrated railway maintenance block planning and scheduling platform built with **Django**, **HTML5/CSS3/JavaScript**, and **Constraint Satisfaction AI Algorithms**.
 
 It solves the critical operational challenge of decentralized, manual maintenance scheduling across three vital fixed infrastructure departments:
 1. **TMS (Track Management System)**: Civil Engineering / Permanent Way (Rail renewals, deep screening, track tamping, USFD flaw rectifications).
 2. **SMMS (Signalling Maintenance & Management System)**: S&T (Point machines, track circuits, electronic interlocking overhauls, signals).
 3. **TDMS (Traction Distribution Management System)**: Electrical / TRD (25kV AC OHE contact wire renewal, cantilevers, insulators, tower wagon blocks).
 
-Synchronized in real-time with the **Control Office Application (COA)** passenger train timetables and freight forecast paths, Rail-Sync AI eliminates duplicate track closures by generating **Coordinated "Shadow Blocks"**, slashing redundant downtime by **35% to 50%** while maximizing track availability and guaranteeing zero detention for high-priority trains like *Vande Bharat* and *Rajdhani*.
+Synchronized in real-time with the **Control Office Application (COA)** passenger train timetables and freight forecast paths, RAIL-SAHAYAK eliminates duplicate track closures by generating **Coordinated "Shadow Blocks"**, slashing redundant downtime by **35% to 50%** while maximizing track availability and guaranteeing zero detention for high-priority trains like *Vande Bharat* and *Rajdhani*.
 
 ---
 
@@ -53,7 +53,7 @@ Synchronized in real-time with the **Control Office Application (COA)** passenge
 
 3. **AI Optimizer Studio (`/optimizer/`)**:
    - Interactive console to configure horizons and optimization strategies (*Balanced*, *Max Uptime*, *Zero Passenger Delay*).
-   - Side-by-side **Before vs After AI Impact Matrix** (Manual BDMS vs Rail-Sync AI).
+   - Side-by-side **Before vs After AI Impact Matrix** (Manual BDMS vs RAIL-SAHAYAK).
    - Dynamic Emergency Defect Injection Simulator.
 
 4. **Master Block Schedule & Gantt Timeline (`/schedule/`)**:

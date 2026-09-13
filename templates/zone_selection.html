@@ -1,0 +1,506 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Operational Zone | RAIL-SAHAYAK</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom Rail CSS -->
+    <link rel="stylesheet" href="{% static 'css/rail_style.css' %}">
+    
+    <style>
+        :root {
+            --rail-navy-dark: #0f172a;
+            --rail-navy-primary: #1e3a8a;
+            --rail-navy-light: #2563eb;
+            --rail-blue-soft: #eff6ff;
+            --rail-slate-50: #f8fafc;
+            --rail-slate-100: #f1f5f9;
+            --rail-slate-200: #e2e8f0;
+            --rail-slate-400: #94a3b8;
+            --rail-slate-600: #475569;
+            --rail-slate-800: #1e293b;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, #f1f5f9 0%, #e2e8f0 100%);
+            font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+            color: var(--rail-slate-800);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        /* Top Navbar */
+        .zone-navbar {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            padding: 0.85rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+        .navbar-brand-group {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+        }
+        .navbar-brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+        .navbar-brand-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--rail-navy-dark);
+            letter-spacing: 0.5px;
+        }
+        .navbar-brand-sub {
+            font-size: 0.7rem;
+            color: var(--rail-slate-600);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+
+        /* Buttons */
+        .btn-round {
+            border-radius: 50px !important;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-proceed {
+            border-radius: 50px !important;
+            padding: 0.75rem 2.25rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            border: none;
+            color: #ffffff;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+        .btn-proceed:hover:not(:disabled) {
+            background: linear-gradient(135deg, #172c57 0%, #1d4ed8 100%);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
+        .btn-proceed:disabled {
+            background: #cbd5e1 !important;
+            border-color: #cbd5e1 !important;
+            color: #94a3b8 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        /* Page Content Frame */
+        .content-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1.5rem;
+        }
+        .zone-box {
+            max-width: 980px;
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            position: relative;
+        }
+
+        /* Selection Card Layout */
+        .zone-card {
+            background: #ffffff;
+            border: 2px solid var(--rail-slate-200);
+            border-radius: 16px;
+            padding: 1.35rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            user-select: none;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .zone-card:hover {
+            border-color: #93c5fd;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
+        }
+        .zone-card.selected {
+            border-color: #2563eb;
+            background: linear-gradient(180deg, #ffffff 0%, #f0f6ff 100%);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+        }
+        
+        .zone-tag {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--rail-navy-primary);
+            background-color: var(--rail-slate-100);
+            padding: 0.3rem 0.75rem;
+            border-radius: 8px;
+            display: inline-block;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+        .zone-card.selected .zone-tag {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        
+        .zone-checkbox-wrap {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .zone-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #2563eb;
+            border-radius: 4px;
+        }
+
+        .stat-pill {
+            font-size: 0.8rem;
+            color: var(--rail-slate-600);
+            background: var(--rail-slate-50);
+            border: 1px solid var(--rail-slate-200);
+            border-radius: 8px;
+            padding: 0.4rem 0.65rem;
+            transition: all 0.2s ease;
+        }
+        .zone-card.selected .stat-pill {
+            background: #ffffff;
+            border-color: #bfdbfe;
+        }
+
+        /* Active indicator badge on card top right */
+        .check-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: #ffffff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+        }
+        .zone-card.selected .check-indicator {
+            display: flex;
+        }
+
+        /* Filter header styling */
+        .header-icon-pill {
+            width: 54px;
+            height: 54px;
+            background: rgba(37, 99, 235, 0.08);
+            border-radius: 16px;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem auto;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="zone-navbar d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <!-- Brand -->
+    <a href="#" class="navbar-brand-group">
+        <div class="navbar-brand-icon">
+            <i class="fa-solid fa-train-subway"></i>
+        </div>
+        <div>
+            <div class="navbar-brand-title">RAIL-SAHAYAK</div>
+            <div class="navbar-brand-sub">Indian Railways • Operations Gateway</div>
+        </div>
+    </a>
+
+    <!-- Navbar Action Items -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+        <!-- Help Modal Button -->
+        <button type="button" class="btn btn-outline-secondary btn-sm btn-round shadow-sm" data-bs-toggle="modal" data-bs-target="#helpModal">
+            <i class="fa-regular fa-circle-question me-1"></i> Help & Guide
+        </button>
+
+        <!-- User Info Pill -->
+        {% if user.is_authenticated %}
+        <div class="d-flex align-items-center gap-2 border-start ps-2 ms-1">
+            <span class="badge rounded-pill bg-light text-dark border px-3 py-2 small d-none d-sm-inline-flex align-items-center gap-2" style="font-weight: 600;">
+                <i class="fa-regular fa-user text-primary"></i> {{ user.get_full_name|default:user.username }}
+            </span>
+            <!-- Logout Button -->
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm btn-round" title="Sign out of portal">
+                <i class="fa-solid fa-power-off me-1"></i> Logout
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- Main Zone Selection Section -->
+<div class="content-wrap">
+    <div class="zone-box">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <div class="header-icon-pill">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <h3 class="fw-bold text-dark mb-2" style="letter-spacing: -0.5px;">Select Operational Railway Zone</h3>
+            <p class="text-muted small mb-0" style="max-width: 620px; margin: 0 auto; line-height: 1.6;">
+                Choose the railway zone(s) you are managing. Maintenance demands, traffic corridor timetables, and AI block scheduling will be filtered to your chosen scope.
+            </p>
+        </div>
+
+        <form method="POST" action="{% url 'zone_selection' %}" id="zoneForm">
+            {% csrf_token %}
+
+            {% if error_message %}
+            <div class="alert alert-danger border-0 shadow-sm rounded-4 py-3 px-3 mb-4 small d-flex align-items-center gap-3" role="alert">
+                <i class="fa-solid fa-circle-exclamation fs-5"></i>
+                <div>{{ error_message }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Action Bar: Select All / Clear Buttons + Counter -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3 border-bottom">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm btn-round" id="btnSelectAll">
+                        <i class="fa-solid fa-check-double me-1"></i> Select All
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-round" id="btnClearAll">
+                        <i class="fa-solid fa-xmark me-1"></i> Clear All
+                    </button>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark border rounded-pill px-3 py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 600;">
+                        <span id="selectedCount" class="fw-bold text-primary">0</span> of {{ zones|length }} Zones Selected
+                    </span>
+                </div>
+            </div>
+
+            <!-- Zones Grid -->
+            <div class="row row-cols-1 row-cols-md-3 g-3 mb-4" id="zoneGrid">
+                {% for z in zones %}
+                <div class="col">
+                    <div class="zone-card {% if z.is_selected %}selected{% endif %}" data-card-id="{{ z.id }}">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="zone-tag">{{ z.code }}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="check-indicator">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <input type="checkbox" name="selected_zones" value="{{ z.id }}" class="zone-checkbox" {% if z.is_selected %}checked{% endif %}>
+                                </div>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1" style="font-size: 1rem;">{{ z.name }}</h6>
+                            <p class="text-muted small mb-3" style="font-size: 0.78rem;">
+                                Indian Railways Administrative Zone
+                            </p>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center stat-pill">
+                                <span><i class="fa-solid fa-sitemap me-2 text-primary"></i>Divisions</span>
+                                <strong class="text-dark">{{ z.divisions_count }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center stat-pill">
+                                <span><i class="fa-solid fa-route me-2 text-primary"></i>Corridors</span>
+                                <strong class="text-dark">{{ z.corridors_count }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center stat-pill">
+                                <span><i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>Pending Demands</span>
+                                <strong class="text-danger">{{ z.demands_count }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-folder-open mb-2 text-secondary fs-2"></i>
+                    <p class="mb-0">No zones configured in database.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Bottom Action Area -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-3 border-top">
+                <div class="text-muted small d-flex align-items-center gap-2" id="statusNotice">
+                    <i class="fa-solid fa-circle-info text-primary fs-6"></i>
+                    <span id="noticeText" style="font-weight: 500;">Please select at least 1 railway zone to continue.</span>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-proceed" id="btnProceed" disabled>
+                        Proceed to Dashboard <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Genuine Help Guide Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header bg-light border-bottom border-light-subtle px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark" id="helpModalLabel">
+                    <i class="fa-regular fa-circle-question text-primary me-2"></i> Zone Selection Guide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h6 class="fw-bold text-dark mb-2">How Zone Filtering Works:</h6>
+                <p class="text-muted small mb-3" style="line-height: 1.5;">
+                    RAIL-SAHAYAK organizes maintenance corridors and block allocations by Railway Administrative Zones.
+                </p>
+                <ul class="text-muted small ps-3 mb-4" style="line-height: 1.6;">
+                    <li class="mb-2"><strong>Single Zone:</strong> Focus on operations within one specific zone (e.g., North Central Railway).</li>
+                    <li class="mb-2"><strong>Multiple Zones:</strong> Monitor inter-zonal traffic corridors spanning neighboring zones (e.g., NCR and NR).</li>
+                    <li class="mb-2"><strong>Select All:</strong> View whole-network statistics across all operational corridors.</li>
+                </ul>
+                <div class="p-3 bg-primary-subtle rounded-3 small text-primary-emphasis border border-primary-subtle d-flex align-items-start gap-2">
+                    <i class="fa-solid fa-circle-check text-primary mt-1"></i>
+                    <div>
+                        You can switch or change your active zones at any time using the <strong>Zone Switcher</strong> in the top navigation bar of any page.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top border-light-subtle px-4 py-3">
+                <button type="button" class="btn btn-secondary btn-sm btn-round px-4" data-bs-dismiss="modal">Got it</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.zone-card');
+    const selectAllBtn = document.getElementById('btnSelectAll');
+    const clearAllBtn = document.getElementById('btnClearAll');
+    const countDisplay = document.getElementById('selectedCount');
+    const proceedBtn = document.getElementById('btnProceed');
+    const noticeText = document.getElementById('noticeText');
+    const form = document.getElementById('zoneForm');
+
+    function refreshSelectionState() {
+        const checked = document.querySelectorAll('input[name="selected_zones"]:checked');
+        const count = checked.length;
+        countDisplay.textContent = count;
+
+        if (count > 0) {
+            proceedBtn.disabled = false;
+            noticeText.textContent = count + ' zone' + (count > 1 ? 's' : '') + ' selected. Ready to proceed.';
+            noticeText.classList.add('text-success');
+            noticeText.classList.remove('text-muted');
+        } else {
+            proceedBtn.disabled = true;
+            noticeText.textContent = 'Please select at least 1 railway zone to continue.';
+            noticeText.classList.remove('text-success');
+            noticeText.classList.add('text-muted');
+        }
+    }
+
+    cards.forEach(card => {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+
+        card.addEventListener('click', function(e) {
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+            if (checkbox.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            refreshSelectionState();
+        });
+
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            refreshSelectionState();
+        });
+    });
+
+    selectAllBtn.addEventListener('click', function() {
+        cards.forEach(card => {
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            checkbox.checked = true;
+            card.classList.add('selected');
+        });
+        refreshSelectionState();
+    });
+
+    clearAllBtn.addEventListener('click', function() {
+        cards.forEach(card => {
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            checkbox.checked = false;
+            card.classList.remove('selected');
+        });
+        refreshSelectionState();
+    });
+
+    form.addEventListener('submit', function(e) {
+        const checked = document.querySelectorAll('input[name="selected_zones"]:checked');
+        if (checked.length === 0) {
+            e.preventDefault();
+        }
+    });
+
+    // Initial state check
+    refreshSelectionState();
+});
+</script>
+
+</body>
+</html>

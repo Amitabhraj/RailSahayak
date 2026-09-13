@@ -11,10 +11,10 @@ from scheduler.optimizer import optimize_block_schedule, calculate_criticality_s
 
 
 class Command(BaseCommand):
-    help = 'Seeds realistic Indian Railways data for Rail-Sync AI (Corridors, COA Timetables, TMS/SMMS/TDMS demands, and Auth Users)'
+    help = 'Seeds realistic Indian Railways data for RAIL-SAHAYAK (Corridors, COA Timetables, TMS/SMMS/TDMS demands, and Auth Users)'
 
     def handle(self, *args, **options):
-        self.stdout.write("Initializing Rail-Sync AI Database with realistic railway operational data...")
+        self.stdout.write("Initializing RAIL-SAHAYAK Database with realistic railway operational data...")
 
         # 1. Clear existing data safely
         BlockSchedule.objects.all().delete()

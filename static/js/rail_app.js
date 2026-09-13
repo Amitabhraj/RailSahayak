@@ -1,4 +1,4 @@
-/* Rail-Sync AI Dynamic Client Engine */
+/* RAIL-SAHAYAK Dynamic Client Engine */
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Live Digital Clock Ticker
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="badge badge-synergy"><i class="fa-solid fa-bolt me-1"></i> AI Shadow Opportunity Detected!</span>
                             <span class="small text-success">${data.candidates.length} co-located demand(s) nearby</span>
                         </div>
-                        <div class="small text-light mb-2">Rail-Sync AI can combine your request with the following scheduled works to save duplicate block downtime:</div>
+                        <div class="small text-light mb-2">RAIL-SAHAYAK can combine your request with the following scheduled works to save duplicate block downtime:</div>
                         <ul class="list-unstyled mb-0">
                 `;
                 data.candidates.forEach(c => {

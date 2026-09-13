@@ -1,8 +1,9 @@
 import json
 import datetime
 from datetime import timedelta
+from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_POST, require_GET
 from django.db.models import Sum, Count, Avg, Q
 from django.utils import timezone
@@ -16,7 +17,31 @@ from scheduler.models import CorridorBlockWindow, BlockSchedule, OptimizationRun
 from scheduler.optimizer import optimize_block_schedule, replan_emergency_defect, calculate_criticality_score
 
 
+def custom_404_view(request, exception=None):
+    """
+    Renders the responsive & attractive 404 error page.
+    """
+    return render(request, '404.html', status=404)
 
+
+def login_required_404(view_func):
+    """
+    Backend Security: Whenever user is not logged in, return 404 Error.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            if request.path.startswith('/api/'):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '404 Not Found'
+                }, status=404)
+            return render(request, '404.html', status=404)
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+@login_required_404
 def dashboard_view(request):
     """
     Executive Operations Center Dashboard:
@@ -76,6 +101,7 @@ def dashboard_view(request):
     return render(request, 'dashboard.html', context)
 
 
+@login_required_404
 def data_hub_view(request):
     """
     Integrated Data Hub:
@@ -122,6 +148,7 @@ def data_hub_view(request):
     return render(request, 'data_hub.html', context)
 
 
+@login_required_404
 def optimizer_studio_view(request):
     """
     AI Optimization Studio & What-If Simulation:
@@ -157,6 +184,7 @@ def optimizer_studio_view(request):
     return render(request, 'optimizer_studio.html', context)
 
 
+@login_required_404
 def master_schedule_view(request):
     """
     Master Schedule & Interactive Gantt Timeline:
@@ -201,6 +229,7 @@ def master_schedule_view(request):
     return render(request, 'master_schedule.html', context)
 
 
+@login_required_404
 def department_portal_view(request):
     """
     Department Block Demanding Portal (BDMS Integration):
@@ -221,6 +250,7 @@ def department_portal_view(request):
     return render(request, 'department_portal.html', context)
 
 
+@login_required_404
 def analytics_view(request):
     """
     Analytics & Asset Downtime Reduction Metrics:
@@ -266,6 +296,7 @@ def analytics_view(request):
 # ==========================================
 
 @require_POST
+@login_required_404
 def api_run_optimizer(request):
     """
     Trigger the AI Optimizer on demand via AJAX.
@@ -282,6 +313,7 @@ def api_run_optimizer(request):
 
 
 @require_POST
+@login_required_404
 def api_inject_emergency(request):
     """
     Simulates injection of an emergency defect (e.g. Broken Rail or OHE Snap)
@@ -353,6 +385,7 @@ def api_inject_emergency(request):
 
 
 @require_POST
+@login_required_404
 def api_submit_demand(request):
     """
     Allows submitting a new maintenance demand with immediate AI scoring.
@@ -423,6 +456,7 @@ def api_submit_demand(request):
 
 
 @require_GET
+@login_required_404
 def api_check_co_location(request):
     """
     Live AI assistance: As a user types km and corridor in the form,

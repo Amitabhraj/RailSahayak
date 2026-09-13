@@ -38,3 +38,5 @@ urlpatterns = [
     path('api/check-co-location/', views.api_check_co_location, name='api_check_co_location'),
 ]
 
+handler404 = 'scheduler.views.custom_404_view'
+

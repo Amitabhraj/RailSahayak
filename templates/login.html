@@ -1,138 +1,571 @@
 {% load static %}
+{% block body %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operations Login | Rail-Sync AI</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Custom Rail CSS -->
-    <link rel="stylesheet" href="{% static 'css/rail_style.css' %}">
-</head>
-<body class="login-page">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Login | RailSahayak</title>
 
-<div class="login-card">
-    <!-- Top Header Banner -->
-    <div class="p-4 text-center border-bottom bg-white">
-        <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle text-white mb-2" style="width: 60px; height: 60px; background-color: #213d77;">
-            <i class="fa-solid fa-train-subway fs-3"></i>
-        </div>
-        <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.01em;">RAIL-SYNC AI</h3>
-        <p class="text-muted small mb-0">Automatic Multi-Department Railway Block Planning System</p>
-        <div class="mt-2">
-            <span class="badge bg-light border text-primary small">
-                <i class="fa-solid fa-server me-1"></i> Indian Railways Control Gateway
-            </span>
-        </div>
-    </div>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <div class="p-4 bg-white">
-        {% if error_message %}
-        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-3 small" role="alert">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <div>{{ error_message }}</div>
-        </div>
-        {% endif %}
-
-        {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} d-flex align-items-center gap-2 py-2 px-3 mb-3 small" role="alert">
-                <i class="fa-solid fa-circle-info"></i>
-                <div>{{ message }}</div>
-            </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- Login Form -->
-        <form method="POST" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label text-dark small fw-bold">Username / Employee ID</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border text-primary"><i class="fa-solid fa-user"></i></span>
-                    <input type="text" name="username" id="loginUsername" class="form-control form-control-rail" placeholder="Enter username" required autofocus>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label class="form-label text-dark small fw-bold mb-0">Password</label>
-                </div>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border text-primary"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" name="password" id="loginPassword" class="form-control form-control-rail" placeholder="Enter password" required>
-                    <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility()"><i class="fa-solid fa-eye" id="pwdEyeIcon"></i></button>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-rail-primary w-100 py-2 mb-3">
-                <i class="fa-solid fa-right-to-bracket me-2"></i> Access Operations Center
-            </button>
-        </form>
-
-        <!-- Demo Credentials Quick Fill -->
-        <div class="p-3 rounded bg-light border mb-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="text-dark small fw-bold"><i class="fa-solid fa-bolt text-warning me-1"></i> Instant Demo Logins:</span>
-                <span class="text-muted" style="font-size: 0.72rem;">Click to Auto-Fill</span>
-            </div>
-            <div class="row g-2">
-                <div class="col-6">
-                    <div class="p-2 demo-chip" onclick="fillCredentials('tms_engineer', 'rail123')">
-                        <strong class="text-primary d-block">🛠️ TMS Engineer</strong>
-                        <span class="text-muted small">Civil / P-Way</span>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="p-2 demo-chip" onclick="fillCredentials('smms_engineer', 'rail123')">
-                        <strong class="text-warning d-block" style="color: #b45309 !important;">🚦 SMMS Officer</strong>
-                        <span class="text-muted small">Signal & Telecom</span>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="p-2 demo-chip" onclick="fillCredentials('tdms_engineer', 'rail123')">
-                        <strong class="d-block" style="color: #7e22ce;">⚡ TDMS Engineer</strong>
-                        <span class="text-muted small">Traction OHE</span>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="p-2 demo-chip" onclick="fillCredentials('admin', 'admin123')">
-                        <strong class="text-success d-block">🎛️ Chief Controller</strong>
-                        <span class="text-muted small">COA Operations</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Registration Link -->
-        <div class="text-center text-muted small">
-            New field engineer or operating controller?
-            <a href="{% url 'signup' %}" class="text-primary fw-bold text-decoration-none ms-1">Register Portal Account</a>
-        </div>
-    </div>
-</div>
-
-<script>
-function fillCredentials(user, pwd) {
-    document.getElementById('loginUsername').value = user;
-    document.getElementById('loginPassword').value = pwd;
-}
-
-function togglePasswordVisibility() {
-    const pwdInput = document.getElementById('loginPassword');
-    const eye = document.getElementById('pwdEyeIcon');
-    if (pwdInput.type === 'password') {
-        pwdInput.type = 'text';
-        eye.classList.replace('fa-eye', 'fa-eye-slash');
-    } else {
-        pwdInput.type = 'password';
-        eye.classList.replace('fa-eye-slash', 'fa-eye');
+  <style>
+    :root {
+      --primary-color: #0f52ba;
+      --primary-hover: #083b8a;
+      --accent-color: #00d2ff;
+      --bg-light: #f0f4f9;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
     }
-}
-</script>
 
+    * {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #eef2ff 0%, #f8fafc 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Navbar Styling */
+    .custom-navbar {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      padding: 0.75rem 1.5rem;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .brand-logo {
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: var(--primary-color);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-logo i {
+      background: linear-gradient(135deg, #0f52ba, #00d2ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Clickable Department Pills */
+    .dept-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dept-nav-link:hover {
+      background: #ffffff;
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(15, 82, 186, 0.12);
+    }
+
+    .dept-nav-link:active {
+      transform: translateY(0);
+    }
+
+    .dept-sub {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .dept-nav-link:hover .dept-sub {
+      color: var(--primary-color);
+      opacity: 0.8;
+    }
+
+    .nav-icon-btn {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .nav-icon-btn:hover {
+      background: #f1f5f9;
+      color: var(--primary-color);
+    }
+
+    /* Main Container & Card */
+    .auth-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .auth-card {
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04);
+      overflow: hidden;
+      width: 100%;
+      max-width: 1120px;
+      min-height: 620px;
+    }
+
+    /* Form Section */
+    .form-section {
+      padding: 3.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .system-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eff6ff;
+      color: var(--primary-color);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1.25rem;
+      width: fit-content;
+      border: 1px solid #dbeafe;
+    }
+
+    .form-header h3 {
+      font-weight: 800;
+      color: var(--text-dark);
+      font-size: 1.85rem;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .form-floating > .form-control {
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+      background-color: #f8fafc;
+      font-weight: 500;
+      color: var(--text-dark);
+      transition: all 0.2s ease;
+    }
+
+    .form-floating > label {
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .form-floating > .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(15, 82, 186, 0.1);
+      background-color: #ffffff;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #94a3b8;
+      z-index: 10;
+      padding: 6px;
+      transition: color 0.2s ease;
+    }
+
+    .password-toggle:hover {
+      color: var(--primary-color);
+    }
+
+    .btn-primary-custom {
+      background: linear-gradient(135deg, #0f52ba 0%, #083b8a 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #ffffff;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 20px -5px rgba(15, 82, 186, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px -5px rgba(15, 82, 186, 0.45);
+      background: linear-gradient(135deg, #1158c7 0%, #0a439c 100%);
+    }
+
+    /* Video Showcase Section */
+    .video-section {
+      position: relative;
+      background: #090d16;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: 1;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+      filter: saturate(1.1) brightness(0.85);
+    }
+
+    .video-overlay {
+      position: relative;
+      z-index: 2;
+      color: #ffffff;
+      padding: 3rem;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.92) 80%);
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .live-status-pill {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 30px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .video-caption h2 {
+      font-weight: 800;
+      font-size: 2.1rem;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+      line-height: 1.25;
+    }
+
+    .video-caption p {
+      font-size: 0.98rem;
+      color: #cbd5e1;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .dept-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dept-chip {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .dept-chip:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    /* Mobile Responsiveness Improvements */
+    @media (max-width: 991.98px) {
+      .custom-navbar {
+        padding: 0.75rem 1rem;
+      }
+      .dept-nav-link {
+        width: 100%;
+        justify-content: flex-start;
+        margin-bottom: 6px;
+      }
+      .video-section {
+        min-height: 280px;
+      }
+      .form-section {
+        padding: 2.5rem 1.5rem;
+      }
+      .video-overlay {
+        padding: 2rem 1.5rem;
+      }
+      .video-caption h2 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Navigation Bar with Clickable Railway Department Links -->
+  <nav class="navbar custom-navbar navbar-expand-xl">
+    <div class="container-fluid">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="brand-logo me-3">
+        <i class="fa-solid fa-train-subway"></i>
+        <span>RailSahayak</span>
+      </a>
+
+      <!-- Navbar Mobile Toggler -->
+      <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarDeptMenu" aria-controls="navbarDeptMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Department Navigation Links -->
+      <div class="collapse navbar-collapse" id="navbarDeptMenu">
+        <ul class="navbar-nav me-auto mb-3 mb-xl-0 gap-2 mt-3 mt-xl-0">
+          
+          <!-- Engineering (TMS) Link -->
+          <li class="nav-item">
+            <a href="/dept/tms/" class="dept-nav-link">
+              <i class="fa-solid fa-wrench text-warning"></i>
+              <span>Railway Engineering</span>
+              <span class="dept-sub">(TMS)</span>
+            </a>
+          </li>
+
+          <!-- Signal & Telecom (SMMS) Link -->
+          <li class="nav-item">
+            <a href="/dept/smms/" class="dept-nav-link">
+              <i class="fa-solid fa-tower-cell text-info"></i>
+              <span>Signal & Telecom</span>
+              <span class="dept-sub">(SMMS)</span>
+            </a>
+          </li>
+
+          <!-- Traction Distribution (TDMS) Link -->
+          <li class="nav-item">
+            <a href="/dept/tdms/" class="dept-nav-link">
+              <i class="fa-solid fa-bolt text-danger"></i>
+              <span>Traction Distribution</span>
+              <span class="dept-sub">(TDMS)</span>
+            </a>
+          </li>
+
+          <!-- Traffic / Control (COA) Link -->
+          <li class="nav-item">
+            <a href="/dept/coa/" class="dept-nav-link">
+              <i class="fa-solid fa-traffic-light text-success"></i>
+              <span>Operating / Control</span>
+              <span class="dept-sub">(COA)</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Action Links -->
+        <div class="d-flex align-items-center gap-2 pt-2 pt-xl-0">
+          <a href="/user/request_user" class="btn btn-outline-primary rounded-pill px-3 fs-6 fw-semibold">
+            Request Access
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- Main Content Container -->
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="row g-0 h-100">
+
+        <!-- Left Column: Login Form -->
+        <div class="col-lg-6 form-section">
+          
+          <div class="system-badge">
+            <i class="fa-solid fa-shield-halved"></i> Block Planning Portal
+          </div>
+
+          <!-- Django Messages Alert Banner -->
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 border-0 shadow-sm" role="alert" id="alert">
+            <i class="fa-solid fa-circle-info me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+
+          <div class="form-header">
+            <h3>Officer Login</h3>
+            <p>Access integrated TMS, SMMS, TDMS & COA operations.</p>
+          </div>
+
+          <form action="/login/" method="post">
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div class="form-floating mb-3">
+              <input type="text" name="username" class="form-control" id="username" placeholder="Username" required autocomplete="username">
+              <label for="username"><i class="fa-regular fa-user me-2"></i>Official ID / Username</label>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-floating mb-3 password-wrapper">
+              <input type="password" name="password" class="form-control" id="password" placeholder="Password" required autocomplete="current-password">
+              <label for="password"><i class="fa-solid fa-lock me-2"></i>Password</label>
+              <i class="fa-regular fa-eye password-toggle" id="togglePassword"></i>
+            </div>
+
+            <!-- Remember & Forgot Password Row -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe">
+                <label class="form-check-label text-muted fw-medium" for="rememberMe" style="font-size: 0.88rem;">
+                  Remember session
+                </label>
+              </div>
+              <a href="/forgot-password/" class="text-primary text-decoration-none fw-semibold" style="font-size: 0.88rem;">Forgot password?</a>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary-custom w-100 mb-3">
+              <span>Sign In to Dashboard</span>
+              <i class="fa-solid fa-arrow-right-long"></i>
+            </button>
+          </form>
+
+          <div class="text-center mt-3">
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">New departmental user? 
+              <a href="/user/request_user" class="text-primary fw-bold text-decoration-none">Request Account Access</a>
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Video Showcase -->
+        <div class="col-lg-6 video-section">
+          <video autoplay loop muted playsinline class="bg-video">
+            <source src="{% static 'video/VANDE_BHARAT_VIDEO.mp4' %}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          
+          <div class="video-overlay">
+            <div class="live-status-pill">
+              <span class="pulse-dot"></span> Multi-Department Engine Active
+            </div>
+
+            <div class="video-caption">
+              <h2>Automated Corridor & Maintenance Planning</h2>
+              <p>Intelligent shadow block scheduling unifying Engineering, Signal & Telecommunication, and Traction Distribution.</p>
+              
+              <!-- Clickable Badges -->
+              <div class="dept-badges">
+                <a href="/dept/tms/" class="dept-chip"><i class="fa-solid fa-wrench"></i>Railway Engineering (TMS)</a>
+                <a href="/dept/smms/" class="dept-chip"><i class="fa-solid fa-tower-cell"></i> S&T (SMMS)</a>
+                <a href="/dept/tdms/" class="dept-chip"><i class="fa-solid fa-bolt"></i> TRD (TDMS)</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Interactive Logic -->
+  <script>
+    // Password visibility toggle
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+
+    togglePassword.addEventListener('click', function () {
+      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', type);
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    // Auto-dismiss Django alert messages after 4 seconds
+    setTimeout(function () {
+      const alertElem = document.getElementById('alert');
+      if (alertElem) {
+        const alert = new bootstrap.Alert(alertElem);
+        alert.close();
+      }
+    }, 4000);
+  </script>
 </body>
 </html>
+{% endblock %}

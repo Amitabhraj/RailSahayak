@@ -1,0 +1,182 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Request Submitted | RAIL-SAHAYAK</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Rail CSS -->
+    <link rel="stylesheet" href="{% static 'css/rail_style.css' %}">
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+            margin: 0;
+        }
+        .submit-container {
+            max-width: 620px;
+            width: 100%;
+        }
+        .submit-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-top: 5px solid #213d77;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+        .status-icon-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background-color: #eff6ff;
+            border: 2px solid #bfdbfe;
+            color: #213d77;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.25rem;
+        }
+        .request-id-box {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .request-id-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #213d77;
+            letter-spacing: 2px;
+            font-family: monospace;
+        }
+        .btn-round {
+            border-radius: 50px !important;
+            padding: 0.6rem 1.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+        .btn-primary-custom {
+            background-color: #213d77;
+            border: 1px solid #213d77;
+            color: #ffffff;
+        }
+        .btn-primary-custom:hover {
+            background-color: #172c57;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 61, 119, 0.25);
+        }
+        .info-table {
+            text-align: left;
+            font-size: 0.88rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="submit-container">
+    <div class="submit-card">
+        <!-- Status Icon -->
+        <div class="status-icon-circle">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+
+        <h3 class="fw-bold text-dark mb-1">Access Request Submitted</h3>
+        <p class="text-muted small mb-3">
+            Your registration details have been received and forwarded to the <strong>COA Chief Controller Desk</strong> for verification.
+        </p>
+
+        <!-- Unique Request ID Box -->
+        <div class="request-id-box">
+            <div class="text-muted small text-uppercase fw-bold mb-1">Your Unique Access Request ID</div>
+            <div class="request-id-value" id="reqIdVal">{{ request_id }}</div>
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="navigator.clipboard.writeText('{{ request_id }}'); this.innerHTML='<i class=\'fa-solid fa-check text-success me-1\'></i> Copied!';">
+                    <i class="fa-regular fa-copy me-1"></i> Copy Request ID
+                </button>
+            </div>
+        </div>
+
+        <!-- Request Summary Info -->
+        <div class="info-table">
+            <div class="info-row">
+                <span class="text-muted">Registered Officer:</span>
+                <strong class="text-dark">{{ full_name }}</strong>
+            </div>
+            <div class="info-row">
+                <span class="text-muted">Official Username:</span>
+                <strong class="text-dark">{{ username }}</strong>
+            </div>
+            <div class="info-row">
+                <span class="text-muted">Department:</span>
+                <strong class="text-primary">{{ department_display }}</strong>
+            </div>
+            <div class="info-row">
+                <span class="text-muted">Designation:</span>
+                <strong class="text-dark">{{ designation }}</strong>
+            </div>
+            {% if employee_id %}
+            <div class="info-row">
+                <span class="text-muted">Employee / PF No:</span>
+                <strong class="text-dark font-monospace">{{ employee_id }}</strong>
+            </div>
+            {% endif %}
+            <div class="info-row">
+                <span class="text-muted">Status:</span>
+                <span class="badge bg-warning text-dark rounded-pill px-2">PENDING COA APPROVAL</span>
+            </div>
+        </div>
+
+        <!-- Clear Instructions -->
+        <div class="alert alert-info text-start small mb-4 rounded-3 d-flex gap-2 align-items-start">
+            <i class="fa-solid fa-circle-info mt-1 text-primary"></i>
+            <div>
+                <strong>Next Step:</strong> Please share your Unique Request ID (<strong>{{ request_id }}</strong>) with your <strong>COA Administrator / Section Controller</strong>. Once approved, you will receive full access to RAIL-SAHAYAK.
+            </div>
+        </div>
+
+        <!-- Return to Login Button -->
+        <div>
+            <a href="{% url 'login' %}" class="btn btn-primary-custom btn-round w-100">
+                <i class="fa-solid fa-arrow-left me-2"></i> Return to Officer Login
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

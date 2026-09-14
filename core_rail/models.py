@@ -135,12 +135,26 @@ class UserProfile(models.Model):
         ('ADMIN', 'Chief Controller / Admin'),
     ]
 
+    ACCESS_STATUS_CHOICES = [
+        ('PENDING', 'Pending COA Approval'),
+        ('APPROVED', 'Access Granted'),
+        ('REJECTED', 'Access Rejected'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     department = models.CharField(max_length=10, choices=DEPARTMENT_CHOICES, default='TMS')
     designation = models.CharField(max_length=100, default='Senior Section Engineer')
     employee_id = models.CharField(max_length=30, blank=True, null=True)
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Access Approval System
+    access_status = models.CharField(max_length=20, choices=ACCESS_STATUS_CHOICES, default='PENDING')
+    request_id = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    requested_at = models.DateTimeField(auto_now_add=True, null=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_profiles')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.user.username} ({self.get_department_display()})"
+        return f"{self.user.username} ({self.get_department_display()}) [{self.get_access_status_display()}]"
 

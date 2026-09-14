@@ -5,6 +5,7 @@ class LoginRequired404Middleware:
     PUBLIC_URL_PREFIXES = (
         '/login',
         '/signup',
+        '/user/request_user',
         '/logout',
         '/admin',
         '/static',

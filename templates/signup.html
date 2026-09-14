@@ -9,115 +9,492 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <!-- Custom Rail CSS -->
     <link rel="stylesheet" href="{% static 'css/rail_style.css' %}">
+    
+    <style>
+        :root {
+            --rail-navy-dark: #0a1329;
+            --rail-navy-main: #1e3a8a;
+            --rail-blue-accent: #2563eb;
+            --rail-blue-soft: #eff6ff;
+            --rail-cyan-glow: #06b6d4;
+            --rail-slate-50: #f8fafc;
+            --rail-slate-100: #f1f5f9;
+            --rail-slate-200: #e2e8f0;
+            --rail-slate-400: #94a3b8;
+            --rail-slate-600: #475569;
+            --rail-slate-800: #1e293b;
+        }
+
+        body.signup-page {
+            background: radial-gradient(circle at 0% 0%, #0a1329 0%, #1e293b 50%, #0f172a 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--rail-slate-800);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Highlights */
+        body.signup-page::before {
+            content: '';
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -100px;
+            left: -100px;
+            z-index: 0;
+            pointer-events: none;
+        }
+        body.signup-page::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            bottom: -150px;
+            right: -150px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Main Portal Container */
+        .registration-wrapper {
+            max-width: 1080px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .signup-card-container {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        /* Left Side Feature Banner */
+        .portal-side-banner {
+            background: linear-gradient(145deg, #0f172a 0%, #1e3a8a 100%);
+            padding: 3rem 2.5rem;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-side-banner::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.8;
+        }
+
+        .side-brand-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.4rem 0.9rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .side-stat-box {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* Form Controls & Inputs */
+        .form-section-title {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--rail-blue-accent);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--rail-slate-200);
+        }
+
+        .input-group-custom {
+            position: relative;
+        }
+
+        .input-group-custom .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--rail-slate-400);
+            font-size: 0.9rem;
+            z-index: 5;
+            transition: color 0.2s ease;
+        }
+
+        .form-control-rail, .form-select-rail {
+            padding-left: 2.6rem !important;
+            height: 44px;
+            border-radius: 10px;
+            border: 1.5px solid var(--rail-slate-200);
+            background-color: var(--rail-slate-50);
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--rail-slate-800);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .font-monospace {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+
+        .form-control-rail:focus, .form-select-rail:focus {
+            background-color: #ffffff;
+            border-color: var(--rail-blue-accent);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            outline: none;
+        }
+
+        .form-control-rail:focus + .input-icon,
+        .input-group-custom:focus-within .input-icon {
+            color: var(--rail-blue-accent);
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--rail-slate-400);
+            cursor: pointer;
+            z-index: 5;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .password-toggle-btn:hover {
+            color: var(--rail-slate-600);
+        }
+
+        /* Buttons & Extras */
+        .btn-submit-rail {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            border: none;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 0.85rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-submit-rail:hover {
+            background: linear-gradient(135deg, #172c57 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.45);
+            color: #ffffff;
+        }
+
+        .compliance-card {
+            background: var(--rail-blue-soft);
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 0.9rem 1.1rem;
+        }
+
+        .compliance-card .form-check-input {
+            width: 1.15em;
+            height: 1.15em;
+            margin-top: 0.15em;
+            cursor: pointer;
+            accent-color: var(--rail-blue-accent);
+        }
+
+        .header-avatar-badge {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #ffffff;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+        }
+    </style>
 </head>
 <body class="signup-page">
 
-<div class="signup-card">
-    <!-- Top Header Banner -->
-    <div class="p-4 text-center border-bottom bg-white">
-        <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle text-white mb-2" style="width: 56px; height: 56px; background-color: #213d77;">
-            <i class="fa-solid fa-id-card fs-3"></i>
-        </div>
-        <h4 class="fw-bold text-dark mb-1">Railway Officer Registration</h4>
-        <p class="text-muted small mb-0">Create verified credentials for RAIL-SAHAYAK BDMS Portal</p>
-    </div>
+<div class="registration-wrapper">
+    <div class="signup-card-container">
+        <div class="row g-0">
+            
+            <!-- Left Side Branding & Features Panel -->
+            <div class="col-lg-4 portal-side-banner d-none d-lg-flex">
+                <div class="position-relative" style="z-index: 2;">
+                    <div class="side-brand-tag mb-4">
+                        <i class="fa-solid fa-train-subway text-info"></i> Rail-Sahayak BDMS
+                    </div>
+                    <h3 class="fw-bold mb-3" style="line-height: 1.25;">Official Railway Operations & Maintenance Portal</h3>
+                    <p class="text-white-50 small mb-4" style="line-height: 1.6;">
+                        Unified authorization platform for Civil Engineering, Signalling, Electrical Traction, and Traffic Control officers across Indian Railways.
+                    </p>
 
-    <div class="p-4 bg-white">
-        {% if error_message %}
-        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-3 small" role="alert">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <div>{{ error_message }}</div>
-        </div>
-        {% endif %}
+                    <div class="side-stat-box">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-info fs-4"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div>
+                                <div class="fw-bold small">G&SR Compliant</div>
+                                <div class="text-white-50 extra-small" style="font-size: 0.75rem;">Automated Safety & Block Verifications</div>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Signup Form -->
-        <form method="POST" action="{% url 'signup' %}">
-            {% csrf_token %}
+                    <div class="side-stat-box">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-info fs-4"><i class="fa-solid fa-network-wired"></i></div>
+                            <div>
+                                <div class="fw-bold small">Multi-Departmental Sync</div>
+                                <div class="text-white-50 extra-small" style="font-size: 0.75rem;">TMS, SMMS, TDMS & COA Integration</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">First Name</label>
-                    <input type="text" name="first_name" class="form-control form-control-sm form-control-rail" placeholder="e.g. Ramesh" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Last Name</label>
-                    <input type="text" name="last_name" class="form-control form-control-sm form-control-rail" placeholder="e.g. Sharma" required>
-                </div>
-            </div>
-
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Username</label>
-                    <input type="text" name="username" class="form-control form-control-sm form-control-rail font-monospace" placeholder="e.g. ramesh_tms" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Official Email</label>
-                    <input type="email" name="email" class="form-control form-control-sm form-control-rail" placeholder="officer@railnet.gov.in" required>
-                </div>
-            </div>
-
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Department / Discipline</label>
-                    <select name="department" class="form-select form-select-sm form-select-rail" required>
-                        <option value="TMS" selected>TMS: Civil Engineering (Track / P-Way)</option>
-                        <option value="SMMS">SMMS: Signalling & Telecom (S&T)</option>
-                        <option value="TDMS">TDMS: Electrical (Traction / OHE)</option>
-                        <option value="COA">COA: Control Office / Operating</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Designation</label>
-                    <input type="text" name="designation" class="form-control form-control-sm form-control-rail" placeholder="e.g. SSE (P-Way) or DSTE" required>
+                <div class="position-relative" style="z-index: 2;">
+                    <div class="pt-3 border-top border-white-10 d-flex align-items-center justify-content-between text-white-50 extra-small" style="font-size: 0.75rem;">
+                        <span><i class="fa-solid fa-lock me-1"></i> RailNet Verified Portal</span>
+                        <span>IR-2026 Edition</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Employee ID / PF No.</label>
-                    <input type="text" name="employee_id" class="form-control form-control-sm form-control-rail font-monospace" placeholder="e.g. IR-2026-9041">
+            <!-- Right Side Registration Form -->
+            <div class="col-lg-8 bg-white">
+                
+                <!-- Form Top Header -->
+                <div class="p-4 p-md-4 border-bottom bg-white d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center gap-3 mb-1">
+                            <div class="header-avatar-badge">
+                                <i class="fa-solid fa-id-card fs-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-dark mb-0">Railway Officer Registration</h4>
+                                <p class="text-muted small mb-0">Create verified credentials for RAIL-SAHAYAK BDMS Portal</p>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small d-none d-sm-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-circle text-success" style="font-size: 7px;"></i> Gateway Ready
+                    </span>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Division</label>
-                    <select name="division_id" class="form-select form-select-sm form-select-rail">
-                        {% for d in divisions %}
-                        <option value="{{ d.id }}">{{ d.code }} - {{ d.name }}</option>
-                        {% endfor %}
-                    </select>
+
+                <div class="p-4 p-md-4">
+                    {% if error_message %}
+                    <div class="alert alert-danger border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 py-3 px-3 mb-4 small" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                        <div>{{ error_message }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Signup Form -->
+                    <form method="POST" action="">
+                        {% csrf_token %}
+
+                        <!-- Personal Details Section -->
+                        <div class="form-section-title">
+                            <i class="fa-solid fa-user-gear"></i> Personal & Profile Identification
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">First Name</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-regular fa-user input-icon"></i>
+                                    <input type="text" name="first_name" class="form-control form-control-rail" placeholder="e.g. Ramesh" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Last Name</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-regular fa-user input-icon"></i>
+                                    <input type="text" name="last_name" class="form-control form-control-rail" placeholder="e.g. Sharma" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Username</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-solid fa-at input-icon"></i>
+                                    <input type="text" name="username" class="form-control form-control-rail font-monospace" placeholder="e.g. ramesh_tms" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Official Email</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-regular fa-envelope input-icon"></i>
+                                    <input type="email" name="email" class="form-control form-control-rail" placeholder="officer@railnet.gov.in" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Departmental Deployment Section -->
+                        <div class="form-section-title">
+                            <i class="fa-solid fa-sitemap"></i> Official Designation & Administrative Unit
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Department / Discipline</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-solid fa-building-user input-icon"></i>
+                                    <select name="department" class="form-select form-select-rail" required>
+                                        <option value="TMS" selected>TMS: Civil Engineering (Track / P-Way)</option>
+                                        <option value="SMMS">SMMS: Signalling & Telecom (S&T)</option>
+                                        <option value="TDMS">TDMS: Electrical (Traction / OHE)</option>
+                                        <option value="COA">COA: Control Office / Operating</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Designation</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-solid fa-user-tie input-icon"></i>
+                                    <input type="text" name="designation" class="form-control form-control-rail" placeholder="e.g. SSE (P-Way) or DSTE" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Employee ID / PF No.</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-regular fa-address-card input-icon"></i>
+                                    <input type="text" name="employee_id" class="form-control form-control-rail font-monospace" placeholder="e.g. IR-2026-9041">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Division & Zone</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-solid fa-location-dot input-icon"></i>
+                                    <select name="division_id" class="form-select form-select-rail" required>
+                                        <option value="" disabled selected>-- Select Division & Railway Zone --</option>
+                                        {% for d in divisions %}
+                                        <option value="{{ d.id }}">{{ d.code }} - {{ d.name }} ({{ d.zone.code }} Zone)</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Section -->
+                        <div class="form-section-title">
+                            <i class="fa-solid fa-lock"></i> Account Credentials Security
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Password</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-solid fa-key input-icon"></i>
+                                    <input type="password" id="pwdInput" name="password" class="form-control form-control-rail" placeholder="At least 5 characters" required>
+                                    <button type="button" class="password-toggle-btn" onclick="togglePassword('pwdInput', this)">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark small fw-bold mb-1">Confirm Password</label>
+                                <div class="input-group-custom">
+                                    <i class="fa-solid fa-shield-halved input-icon"></i>
+                                    <input type="password" id="pwdConfirmInput" name="password_confirm" class="form-control form-control-rail" placeholder="Repeat password" required>
+                                    <button type="button" class="password-toggle-btn" onclick="togglePassword('pwdConfirmInput', this)">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compliance & Authorization Declaration -->
+                        <div class="compliance-card mb-4">
+                            <div class="form-check m-0 d-flex align-items-start gap-2">
+                                <input class="form-check-input flex-shrink-0" type="checkbox" id="complianceCheck" required checked>
+                                <label class="form-check-label text-secondary small" for="complianceCheck" style="line-height: 1.5; font-size: 0.82rem;">
+                                    I confirm that maintenance blocks demanded will comply with <strong>Indian Railways General & Subsidiary Rules (G&SR)</strong> and OHE power isolation safety protocols.
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Action Submit Button -->
+                        <button type="submit" class="btn btn-submit-rail w-100 mb-3">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Submit Access Request & Clearance
+                        </button>
+                    </form>
+
+                    <div class="text-center text-muted small pt-2">
+                        Already have verified credentials?
+                        <a href="{% url 'login' %}" class="text-primary fw-bold text-decoration-none ms-1">
+                            Sign In Here <i class="fa-solid fa-arrow-right-to-bracket ms-1 small"></i>
+                        </a>
+                    </div>
                 </div>
+
             </div>
-
-            <div class="row g-2 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Password</label>
-                    <input type="password" name="password" class="form-control form-control-sm form-control-rail" placeholder="At least 5 characters" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label text-dark small fw-bold">Confirm Password</label>
-                    <input type="password" name="password_confirm" class="form-control form-control-sm form-control-rail" placeholder="Repeat password" required>
-                </div>
-            </div>
-
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="complianceCheck" required checked>
-                <label class="form-check-label text-muted small" for="complianceCheck">
-                    I confirm that maintenance blocks demanded will comply with Indian Railways General & Subsidiary Rules (G&SR) and OHE power isolation protocols.
-                </label>
-            </div>
-
-            <button type="submit" class="btn btn-rail-primary w-100 py-2 mb-3">
-                <i class="fa-solid fa-user-plus me-1"></i> Register & Enter Operations Center
-            </button>
-        </form>
-
-        <div class="text-center text-muted small">
-            Already have verified credentials?
-            <a href="{% url 'login' %}" class="text-primary fw-bold text-decoration-none ms-1">Sign In Here</a>
         </div>
     </div>
 </div>
+
+<!-- Password Visibility Script -->
+<script>
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+</script>
 
 </body>
 </html>

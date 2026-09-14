@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}COA Access Requests & User Approvals | RAIL-SAHAYAK{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">COA Access Control & User Approvals</h2>
+            <p class="text-muted mb-0 small">
+                Operating Control Office • Verified Clearance for TMS, SMMS, and TDMS Field Officers
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'zone_selection' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 d-inline-flex align-items-center gap-2" title="Switch or change active railway zone filter">
+                <i class="fa-solid fa-map-location-dot text-primary"></i>
+                <span class="small fw-semibold">Active Zone: <strong>{{ active_zones_label|default:"All Zones" }}</strong></span>
+                <i class="fa-solid fa-arrow-right-arrow-left text-muted ms-1" style="font-size: 0.75rem;"></i>
+            </a>
+            <span class="badge bg-primary rounded-pill px-3 py-2">
+                <i class="fa-solid fa-shield-halved me-1"></i> COA Access Gateway v2.0
+            </span>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 py-2 px-3 small d-flex align-items-center gap-2" role="alert">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Top KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-bold text-uppercase">Pending Approval</span>
+                    <div class="p-2 rounded-circle bg-warning bg-opacity-10 text-warning">
+                        <i class="fa-solid fa-clock-rotate-left fs-5"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-warning mb-0">{{ pending_count }}</h3>
+                <span class="text-muted small">Awaiting COA action</span>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-bold text-uppercase">Approved Officers</span>
+                    <div class="p-2 rounded-circle bg-success bg-opacity-10 text-success">
+                        <i class="fa-solid fa-user-check fs-5"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-success mb-0">{{ approved_count }}</h3>
+                <span class="text-muted small">Active in portal</span>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-bold text-uppercase">Rejected Requests</span>
+                    <div class="p-2 rounded-circle bg-danger bg-opacity-10 text-danger">
+                        <i class="fa-solid fa-user-xmark fs-5"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-danger mb-0">{{ rejected_count }}</h3>
+                <span class="text-muted small">Clearance denied</span>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-bold text-uppercase">Total Applications</span>
+                    <div class="p-2 rounded-circle bg-primary bg-opacity-10 text-primary">
+                        <i class="fa-solid fa-users fs-5"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-dark mb-0">{{ total_count }}</h3>
+                <span class="text-muted small">All-time submissions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Card with Search and Table -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="p-3 p-md-4 border-bottom">
+            <div class="row g-3 align-items-center justify-content-between">
+                <!-- Search Bar -->
+                <div class="col-md-6 col-lg-5">
+                    <form method="GET" action="{% url 'coa_access_requests' %}">
+                        <input type="hidden" name="status" value="{{ active_status }}">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-3">
+                                <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                            </span>
+                            <input type="text" name="q" value="{{ search_query }}" class="form-control bg-light border-start-0 border-end-0" placeholder="Search by Unique Request ID, Name, Username, PF No...">
+                            <button class="btn btn-primary rounded-end-pill px-3" type="submit">Search</button>
+                            {% if search_query %}
+                            <a href="{% url 'coa_access_requests' %}?status={{ active_status }}" class="btn btn-outline-secondary rounded-pill ms-2" title="Clear Search">
+                                <i class="fa-solid fa-xmark"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Status Filter Tabs -->
+                <div class="col-md-6 col-lg-6 text-md-end">
+                    <div class="d-inline-flex bg-light p-1 rounded-pill border">
+                        <a href="{% url 'coa_access_requests' %}?status=PENDING{% if search_query %}&q={{ search_query }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if active_status == 'PENDING' %}btn-primary{% else %}text-muted{% endif %}">
+                            Pending ({{ pending_count }})
+                        </a>
+                        <a href="{% url 'coa_access_requests' %}?status=APPROVED{% if search_query %}&q={{ search_query }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if active_status == 'APPROVED' %}btn-primary{% else %}text-muted{% endif %}">
+                            Approved ({{ approved_count }})
+                        </a>
+                        <a href="{% url 'coa_access_requests' %}?status=REJECTED{% if search_query %}&q={{ search_query }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if active_status == 'REJECTED' %}btn-primary{% else %}text-muted{% endif %}">
+                            Rejected ({{ rejected_count }})
+                        </a>
+                        <a href="{% url 'coa_access_requests' %}?status=ALL{% if search_query %}&q={{ search_query }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if active_status == 'ALL' %}btn-primary{% else %}text-muted{% endif %}">
+                            All
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Unique Request ID</th>
+                        <th>Officer Details</th>
+                        <th>Department</th>
+                        <th>Division</th>
+                        <th>Submission Date</th>
+                        <th>Current Status</th>
+                        <th class="text-end pe-4">COA Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in profiles %}
+                    <tr>
+                        <!-- Unique Request ID -->
+                        <td class="ps-4">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <span class="badge bg-light text-dark border font-monospace px-2 py-1 fs-6">
+                                    {{ profile.request_id|default:"REQ-UNKNOWN" }}
+                                </span>
+                                <button type="button" class="btn btn-link btn-sm text-muted p-0 ms-1" onclick="navigator.clipboard.writeText('{{ profile.request_id }}'); this.innerHTML='<i class=\'fa-solid fa-check text-success\'></i>';" title="Copy Request ID">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
+                        </td>
+
+                        <!-- Officer Details -->
+                        <td>
+                            <div class="fw-bold text-dark">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                            <div class="text-muted small">
+                                <span class="font-monospace">@{{ profile.user.username }}</span>
+                                {% if profile.employee_id %} • PF: {{ profile.employee_id }}{% endif %}
+                            </div>
+                            <div class="text-secondary small">{{ profile.designation }}</div>
+                        </td>
+
+                        <!-- Department -->
+                        <td>
+                            <span class="badge {% if profile.department == 'TMS' %}badge-tms{% elif profile.department == 'SMMS' %}badge-smms{% elif profile.department == 'TDMS' %}badge-tdms{% else %}badge-synergy{% endif %}">
+                                {{ profile.get_department_display }}
+                            </span>
+                        </td>
+
+                        <!-- Division & Zone -->
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="text-dark fw-bold">{{ profile.division.code|default:"General" }}</span>
+                                {% if profile.division.zone %}
+                                <span class="badge bg-secondary-subtle text-dark border px-2 py-0" style="font-size: 0.72rem;">{{ profile.division.zone.code }} Zone</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-muted small">{{ profile.division.name|default:"Headquarters" }}</div>
+                        </td>
+
+                        <!-- Date -->
+                        <td>
+                            <span class="text-dark">{{ profile.requested_at|date:"d M Y, H:i"|default:"Recent" }}</span>
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td>
+                            {% if profile.access_status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
+                                <i class="fa-solid fa-clock me-1"></i> PENDING
+                            </span>
+                            {% elif profile.access_status == 'APPROVED' %}
+                            <span class="badge bg-success rounded-pill px-3 py-1 text-white">
+                                <i class="fa-solid fa-circle-check me-1"></i> APPROVED
+                            </span>
+                            {% elif profile.access_status == 'REJECTED' %}
+                            <span class="badge bg-danger rounded-pill px-3 py-1 text-white" title="{{ profile.rejection_reason }}">
+                                <i class="fa-solid fa-circle-xmark me-1"></i> REJECTED
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-end pe-4">
+                            {% if profile.access_status == 'PENDING' %}
+                            <div class="d-inline-flex gap-1">
+                                <!-- Approve Form -->
+                                <form method="POST" action="{% url 'api_coa_access_action' profile.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 py-1 fw-bold">
+                                        <i class="fa-solid fa-check me-1"></i> Approve
+                                    </button>
+                                </form>
+
+                                <!-- Reject Button (Triggers Modal) -->
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1" data-bs-toggle="modal" data-bs-target="#rejectModal{{ profile.id }}">
+                                    <i class="fa-solid fa-xmark me-1"></i> Reject
+                                </button>
+                            </div>
+
+                            <!-- Reject Reason Modal for this profile -->
+                            <div class="modal fade text-start" id="rejectModal{{ profile.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content rounded-4 overflow-hidden border-0 shadow">
+                                        <div class="modal-header bg-light">
+                                            <h5 class="modal-title fw-bold text-dark">
+                                                <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> Reject Access Request
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="POST" action="{% url 'api_coa_access_action' profile.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="reject">
+                                            <div class="modal-body p-4">
+                                                <p class="text-muted small mb-3">
+                                                    You are rejecting access for <strong>{{ profile.user.get_full_name|default:profile.user.username }}</strong> (Request ID: <code>{{ profile.request_id }}</code>).
+                                                </p>
+                                                <div class="mb-3">
+                                                    <label class="form-label text-dark small fw-bold">Reason for Rejection (Optional)</label>
+                                                    <textarea name="rejection_reason" class="form-control rounded-3" rows="3" placeholder="e.g. Invalid Employee ID, Department mismatch, or pending executive sign-off..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer bg-light">
+                                                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3">Confirm Rejection</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% elif profile.access_status == 'APPROVED' %}
+                            <!-- Option to Revoke -->
+                            <form method="POST" action="{% url 'api_coa_access_action' profile.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reject">
+                                <input type="hidden" name="rejection_reason" value="Revoked by COA Chief Controller">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1" onclick="return confirm('Are you sure you want to revoke access for this officer?');">
+                                    <i class="fa-solid fa-ban me-1"></i> Revoke Access
+                                </button>
+                            </form>
+                            {% elif profile.access_status == 'REJECTED' %}
+                            <!-- Option to Re-approve -->
+                            <form method="POST" action="{% url 'api_coa_access_action' profile.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="btn btn-outline-success btn-sm rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> Re-Approve
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <div class="mb-2">
+                                <i class="fa-solid fa-inbox fs-1 text-secondary opacity-50"></i>
+                            </div>
+                            <h6>No access requests found for active zone(s) ({{ active_zones_label|default:"All Zones" }}).</h6>
+                            <p class="small text-muted mb-3">Only officer applicants registered under divisions of <strong>{{ active_zones_label|default:"All Zones" }}</strong> appear in your clearance queue.</p>
+                            <a href="{% url 'zone_selection' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="fa-solid fa-map-location-dot me-1"></i> Switch Active Zone Selection
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

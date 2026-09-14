@@ -74,6 +74,19 @@
                     <span>Availability & Analytics</span>
                 </a>
             </li>
+
+            {% if user.is_authenticated and user.is_staff or user.profile.department == 'COA' or user.profile.department == 'ADMIN' %}
+            <div class="nav-section-label">COA Administration</div>
+            <li class="nav-item">
+                <a href="{% url 'coa_access_requests' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'coa_access_requests' %}active{% endif %}">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Access Approvals</span>
+                    {% if pending_access_requests_count %}
+                    <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">{{ pending_access_requests_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endif %}
         </ul>
 
         <!-- Bottom Status Box -->

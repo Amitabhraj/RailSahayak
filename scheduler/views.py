@@ -1,4 +1,5 @@
 import json
+import random
 import datetime
 from datetime import timedelta
 from functools import wraps
@@ -585,42 +586,81 @@ def api_check_co_location(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 
+def generate_unique_request_id():
+    """Generates a memorable and unique Railway Access Request ID like REQ-64921"""
+    for _ in range(100):
+        req_id = f"REQ-{random.randint(10000, 99999)}"
+        if not UserProfile.objects.filter(request_id=req_id).exists():
+            return req_id
+    return f"REQ-{int(timezone.now().timestamp()) % 1000000}"
+
+
 def login_view(request):
     """
     Railway Operations Authentication Login:
     Authenticates field engineers & operating controllers against Django integrated database.
+    Checks COA clearance access status (PENDING, APPROVED, REJECTED).
     Immediately redirects to Zone Selection upon successful login.
     """
     if request.user.is_authenticated:
         return redirect('dashboard')
     
-    error_message = None
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            request.session.pop('selected_zone_ids', None)
-            return redirect('zone_selection')
+        user_candidate = User.objects.filter(username=username).first()
+        if user_candidate and user_candidate.check_password(password):
+            profile = getattr(user_candidate, 'profile', None)
+            if profile:
+                if profile.access_status == 'PENDING':
+                    req_id_str = profile.request_id or "REQ-PENDING"
+                    messages.warning(
+                        request,
+                        f"Access Pending: Your registration request ({req_id_str}) is awaiting clearance by the COA Chief Controller. Please notify your section controller."
+                    )
+                    return render(request, 'login.html')
+                elif profile.access_status == 'REJECTED':
+                    req_id_str = profile.request_id or "REQ-REJECTED"
+                    reason = f" Reason: {profile.rejection_reason}" if profile.rejection_reason else ""
+                    messages.error(
+                        request,
+                        f"Access Denied: Your registration request ({req_id_str}) was rejected by COA Administration.{reason}"
+                    )
+                    return render(request, 'login.html')
+                elif profile.access_status == 'APPROVED':
+                    if not user_candidate.is_active:
+                        user_candidate.is_active = True
+                        user_candidate.save(update_fields=['is_active'])
+                    login(request, user_candidate)
+                    request.session.pop('selected_zone_ids', None)
+                    return redirect('zone_selection')
+            else:
+                if user_candidate.is_active:
+                    login(request, user_candidate)
+                    request.session.pop('selected_zone_ids', None)
+                    return redirect('zone_selection')
+                else:
+                    messages.error(request, "Account inactive. Please contact system administrator.")
+                    return render(request, 'login.html')
         else:
-            error_message = "Invalid Indian Railways portal credentials. Please check your username and password."
+            messages.error(request, "Invalid Indian Railways portal credentials. Please check your username and password.")
 
-    return render(request, 'login.html', {'error_message': error_message})
+    return render(request, 'login.html')
 
 
 def signup_view(request):
     """
-    Department Staff Registration:
-    Creates user account and associates UserProfile with department (TMS, SMMS, TDMS, COA).
-    Immediately redirects to Zone Selection upon successful registration.
+    Department Staff Registration / Request Access:
+    Creates user account with is_active=False and access_status='PENDING'.
+    Generates a Unique Request ID (e.g. REQ-64921) for COA Chief Controller clearance.
+    Renders request_submitted.html with the prominent ID and instructions.
     """
     if request.user.is_authenticated:
         return redirect('dashboard')
     
     error_message = None
-    divisions = Division.objects.all()
+    divisions = Division.objects.select_related('zone').all().order_by('zone__code', 'code')
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -648,19 +688,30 @@ def signup_view(request):
                 email=email,
                 password=password,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
+                is_active=False  # Inactive until approved by COA Admin
             )
             div = Division.objects.filter(id=division_id).first() if division_id else None
-            UserProfile.objects.create(
+            req_id = generate_unique_request_id()
+            profile = UserProfile.objects.create(
                 user=user,
                 department=department,
                 designation=designation,
                 employee_id=employee_id,
-                division=div
+                division=div,
+                access_status='PENDING',
+                request_id=req_id
             )
-            login(request, user)
-            request.session.pop('selected_zone_ids', None)
-            return redirect('zone_selection')
+            
+            dept_map = dict(UserProfile.DEPARTMENT_CHOICES)
+            return render(request, 'request_submitted.html', {
+                'request_id': req_id,
+                'full_name': f"{first_name} {last_name}".strip() or username,
+                'username': username,
+                'department_display': dept_map.get(department, department),
+                'designation': designation,
+                'employee_id': employee_id,
+            })
 
     return render(request, 'signup.html', {
         'error_message': error_message,
@@ -675,5 +726,131 @@ def logout_view(request):
     request.session.pop('selected_zone_ids', None)
     logout(request)
     return redirect('login')
+
+
+@login_required_404
+def coa_access_requests_view(request):
+    """
+    COA Access Control & User Approvals Portal:
+    Allows COA Chief Controller & Admins to view pending, approved, and rejected access requests
+    specifically scoped to the railway zone(s) selected by the COA officer.
+    Supports search by Unique Request ID, username, name, or employee ID.
+    """
+    profile = getattr(request.user, 'profile', None)
+    is_coa = request.user.is_staff or (profile and profile.department in ['COA', 'ADMIN'])
+    if not is_coa:
+        return render(request, '404.html', status=404)
+
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
+    search_query = request.GET.get('q', '').strip()
+    active_status = request.GET.get('status', 'PENDING').upper()
+
+    # Scope profiles strictly to the active zones selected by the COA officer
+    qs = UserProfile.objects.filter(
+        division__zone__in=active_zones
+    ).select_related('user', 'division__zone', 'reviewed_by').order_by('-requested_at')
+
+    # Status counts across the selected active zones
+    pending_count = UserProfile.objects.filter(access_status='PENDING', division__zone__in=active_zones).count()
+    approved_count = UserProfile.objects.filter(access_status='APPROVED', division__zone__in=active_zones).count()
+    rejected_count = UserProfile.objects.filter(access_status='REJECTED', division__zone__in=active_zones).count()
+    total_count = UserProfile.objects.filter(division__zone__in=active_zones).count()
+
+    # Search filter
+    if search_query:
+        qs = qs.filter(
+            Q(request_id__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(employee_id__icontains=search_query)
+        )
+
+    # Status filter
+    if active_status in ['PENDING', 'APPROVED', 'REJECTED']:
+        qs = qs.filter(access_status=active_status)
+    else:
+        active_status = 'ALL'
+
+    context = {
+        'profiles': qs,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'total_count': total_count,
+        'active_status': active_status,
+        'search_query': search_query,
+    }
+    return render(request, 'coa_access_requests.html', context)
+
+
+@login_required_404
+@require_POST
+def api_coa_access_action(request, profile_id):
+    """
+    COA Action: Approve or Reject access requests.
+    Enforces zone authorization: COA can only act on officers belonging to active zones.
+    """
+    profile = getattr(request.user, 'profile', None)
+    is_coa = request.user.is_staff or (profile and profile.department in ['COA', 'ADMIN'])
+    if not is_coa:
+        return render(request, '404.html', status=404)
+
+    active_zones = get_active_zones(request)
+    if active_zones is None:
+        return redirect('zone_selection')
+
+    target_profile = get_object_or_404(UserProfile, id=profile_id)
+
+    # Check if target profile belongs to active zones
+    if not target_profile.division or target_profile.division.zone not in active_zones:
+        messages.error(
+            request,
+            f"Zone Authorization Error: Officer {target_profile.user.username} belongs to "
+            f"{target_profile.division.zone.code if target_profile.division else 'unassigned zone'}, "
+            f"which is outside your active zone selection."
+        )
+        return redirect('coa_access_requests')
+
+    action = request.POST.get('action', '').strip().lower()
+    rejection_reason = request.POST.get('rejection_reason', '').strip()
+
+    if action == 'approve':
+        target_profile.access_status = 'APPROVED'
+        target_profile.reviewed_by = request.user
+        target_profile.reviewed_at = timezone.now()
+        target_profile.rejection_reason = ''
+        target_profile.save(update_fields=['access_status', 'reviewed_by', 'reviewed_at', 'rejection_reason'])
+
+        target_user = target_profile.user
+        target_user.is_active = True
+        target_user.save(update_fields=['is_active'])
+
+        messages.success(
+            request,
+            f"Access APPROVED for {target_user.get_full_name() or target_user.username} (ID: {target_profile.request_id}). Officer now has active clearance."
+        )
+
+    elif action == 'reject':
+        target_profile.access_status = 'REJECTED'
+        target_profile.reviewed_by = request.user
+        target_profile.reviewed_at = timezone.now()
+        target_profile.rejection_reason = rejection_reason or "Clearance denied by COA Control Desk."
+        target_profile.save(update_fields=['access_status', 'reviewed_by', 'reviewed_at', 'rejection_reason'])
+
+        target_user = target_profile.user
+        target_user.is_active = False
+        target_user.save(update_fields=['is_active'])
+
+        messages.warning(
+            request,
+            f"Access REJECTED for {target_user.get_full_name() or target_user.username} (ID: {target_profile.request_id})."
+        )
+
+    redirect_url = f"/coa/access-requests/?status={target_profile.access_status}"
+    return redirect(redirect_url)
 
 

@@ -30,7 +30,13 @@ urlpatterns = [
     path('select-zone/', views.zone_selection_view, name='zone_selection'),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
+    path('user/request_user', views.signup_view, name='request_user'),
+    path('user/request_user/', views.signup_view, name='request_user_slash'),
     path('logout/', views.logout_view, name='logout'),
+    
+    # COA Access Approval Routes
+    path('coa/access-requests/', views.coa_access_requests_view, name='coa_access_requests'),
+    path('coa/access-requests/<int:profile_id>/action/', views.api_coa_access_action, name='api_coa_access_action'),
     
     # AJAX APIs
     path('api/run-optimizer/', views.api_run_optimizer, name='api_run_optimizer'),

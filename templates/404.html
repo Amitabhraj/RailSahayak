@@ -4,201 +4,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Section Restricted | RAIL-SAHAYAK</title>
+    <title>404 - Page Not Found | RAIL-SAHAYAK</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Custom Rail CSS -->
-    <link rel="stylesheet" href="{% static 'css/rail_style.css' %}">
+    
     <style>
+        :root {
+            --primary-blue: #1e3a8a;
+            --primary-hover: #1e293b;
+            --bg-color: #f8fafc;
+            --text-main: #334155;
+            --text-muted: #64748b;
+        }
+
         body {
-            background-color: #f4f6f9;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #212529;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 1.5rem;
             margin: 0;
+            overflow-x: hidden;
         }
-        .error-container {
-            max-width: 600px;
-            width: 100%;
+
+        /* Minimal Navbar */
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.85rem 1.5rem;
         }
-        .error-card {
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-top: 5px solid #213d77;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(33, 61, 119, 0.08);
-            overflow: hidden;
-            text-align: center;
-        }
-        .error-header {
-            padding: 2.25rem 2rm 1.75rem;
-            background: #ffffff;
-        }
-        .signal-badge-wrapper {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            background-color: #fef2f2;
-            border: 2px solid #fecaca;
-            margin-bottom: 1.25rem;
-        }
-        .signal-icon {
-            font-size: 3rm;
-            color: #dc2626;
-        }
-        .signal-dot-pulse {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 16px;
-            height: 16px;
-            background-color: #ef4444;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-            animation: pulse-red 1.8s infinite;
-        }
-        @keyframes pulse-red {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-            }
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-            }
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-            }
-        }
-        .error-code {
-            font-size: 3.75rem;
-            font-weight: 900;
-            line-height: 1;
-            letter-spacing: 2px;
-            color: #213d77;
-            margin-bottom: 0.5rem;
-        }
-        .error-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.75rem;
-        }
-        .error-description {
-            font-size: 0.95rem;
-            color: #4b5563;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            padding: 0 1rem;
-        }
-        .status-chips-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 1.75rem;
-            padding: 0 0.5rem;
-        }
-        .status-chip {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 0.6rem 0.75rem;
-            font-size: 0.82rem;
+
+        .navbar-brand {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            text-align: left;
-        }
-        .status-chip i {
-            font-size: 1.15rem;
-        }
-        .status-chip-label {
-            color: #64748b;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            display: block;
-        }
-        .status-chip-val {
-            color: #1e293b;
-            font-weight: 700;
-            display: block;
-        }
-        .btn-irctc-primary {
-            background-color: #213d77 !important;
-            border: 1px solid #213d77 !important;
-            color: #ffffff !important;
-            font-weight: 600;
-            font-size: 0.95rem;
-            padding: 0.65rem 1.35rem;
-            border-radius: 5px;
-            transition: all 0.2s ease-in-out;
+            gap: 0.65rem;
             text-decoration: none;
-            display: inline-flex;
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.3px;
+        }
+
+        .navbar-brand i {
+            font-size: 1.4rem;
+        }
+
+        /* Centered Error Container */
+        .main-container {
+            flex: 1;
+            display: flex;
             align-items: center;
             justify-content: center;
+            padding: 2rem 1rem;
         }
-        .btn-irctc-primary:hover {
-            background-color: #172c57 !important;
-            border-color: #172c57 !important;
-            color: #ffffff !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(33, 61, 119, 0.25);
+
+        .error-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            max-width: 480px;
+            width: 100%;
+            padding: 2.25rem 2rem 2.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
-        .btn-irctc-outline {
-            background-color: #ffffff !important;
-            border: 1px solid #213d77 !important;
-            color: #213d77 !important;
+
+        /* Railway Train Track Animation */
+        .train-animation-wrapper {
+            width: 100%;
+            position: relative;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            height: 42px;
+        }
+
+        .rail-track {
+            position: absolute;
+            bottom: 4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #cbd5e1;
+        }
+
+        .rail-track::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                #94a3b8 0,
+                #94a3b8 3px,
+                transparent 3px,
+                transparent 10px
+            );
+        }
+
+        .moving-train {
+            position: absolute;
+            bottom: 6px;
+            left: -120px;
+            display: flex;
+            align-items: flex-end;
+            animation: moveTrain 8s linear infinite;
+        }
+
+        .train-icon {
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+            line-height: 1;
+        }
+
+        @keyframes moveTrain {
+            0% {
+                left: -80px;
+            }
+            100% {
+                left: calc(100% + 40px);
+            }
+        }
+
+        /* Typography & Controls */
+        .error-code {
+            font-size: 3.8rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-title {
+            font-size: 1.25rem;
             font-weight: 600;
-            font-size: 0.95rem;
-            padding: 0.65rem 1.35rem;
-            border-radius: 5px;
-            transition: all 0.2s ease-in-out;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+        }
+
+        .error-desc {
+            font-size: 0.925rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 1.75rem;
+        }
+
+        .btn-group-custom {
+            display: flex;
+            gap: 0.75rem;
             justify-content: center;
         }
-        .btn-irctc-outline:hover {
-            background-color: #e8eef8 !important;
-            color: #172c57 !important;
-            transform: translateY(-1px);
+
+        .btn-primary-custom {
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
         }
-        .error-footer {
-            background-color: #f8fafc;
-            border-top: 1px solid #e5e7eb;
-            padding: 1rem 1.5rem;
-            font-size: 0.82rem;
-            color: #6b7280;
+
+        .btn-primary-custom:hover {
+            background-color: var(--primary-hover);
+            color: #ffffff;
         }
-        @media (max-width: 576px) {
-            .error-code {
-                font-size: 3rem;
-            }
-            .error-title {
-                font-size: 1.2rem;
-            }
-            .error-header {
-                padding: 1.5rem 1rem 1.25rem;
-            }
-            .error-actions {
+
+        .btn-outline-custom {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid #cbd5e1;
+            padding: 0.65rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+
+        @media (max-width: 480px) {
+            .btn-group-custom {
                 flex-direction: column;
-                gap: 0.65rem !important;
             }
-            .error-actions a {
+            .btn-group-custom a {
                 width: 100%;
             }
         }
@@ -206,72 +205,44 @@
 </head>
 <body>
 
-<div class="error-container">
-    <div class="error-card">
-        <div class="error-header">
-            <!-- Signal Danger / Restriction Warning Graphic -->
-            <div class="signal-badge-wrapper">
-                <i class="fa-solid fa-triangle-exclamation signal-icon"></i>
-                <div class="signal-dot-pulse" title="Signal Aspect: DANGER (STOT)"></div>
+    <!-- Minimal Navbar -->
+    <nav class="navbar">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fa-solid fa-train text-primary"></i>
+                <span>RAIL-SAHAYAK</span>
+            </span>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="main-container">
+        <div class="error-card">
+            
+            <!-- Train Track Animation -->
+            <div class="train-animation-wrapper">
+                <div class="moving-train">
+                    <i class="fa-solid fa-train-subway train-icon"></i>
+                </div>
+                <div class="rail-track"></div>
             </div>
 
-            <!-- Error Code & Title -->
             <div class="error-code">404</div>
-            <div class="error-title">Section Restricted or Track Not Found</div>
-            
-            <!-- Description -->
-            <p class="error-description">
-                The corridor block or operational page you requested is not available.
-                Access to the <strong>RAIL-SAHAYAK Operations Dashboard</strong>, Data Hub, and Optimizer Studio is restricted to authorized railway personnel only.
+            <h1 class="error-title">Page or Section Restricted</h1>
+            <p class="error-desc">
+                The page you are looking for does not exist or requires authorized login credentials to access.
             </p>
 
-            <!-- Railway Status Grid -->
-            <div class="status-chips-grid">
-                <div class="status-chip">
-                    <i class="fa-solid fa-traffic-light text-danger"></i>
-                    <div>
-                        <span class="status-chip-label">Signal Aspect</span>
-                        <span class="status-chip-val text-danger">RED / STOP</span>
-                    </div>
-                </div>
-                <div class="status-chip">
-                    <i class="fa-solid fa-shield-halved text-primary"></i>
-                    <div>
-                        <span class="status-chip-label">Authorization</span>
-                        <span class="status-chip-val">Login Required</span>
-                    </div>
-                </div>
-                <div class="status-chip">
-                    <i class="fa-solid fa-network-wired text-success"></i>
-                    <div>
-                        <span class="status-chip-label">Gateway Status</span>
-                        <span class="status-chip-val text-success">COA v4.2 Active</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-flex justify-content-center gap-3 error-actions">
-                <a href="{% url 'login' %}" class="btn-irctc-primary">
-                    <i class="fa-solid fa-right-to-bracket me-2"></i> Railway Officer Login
+            <div class="btn-group-custom">
+                <a href="{% url 'login' %}" class="btn-primary-custom">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i> Log In
                 </a>
-                <a href="{% url 'signup' %}" class="btn-irctc-outline">
-                    <i class="fa-solid fa-user-plus me-2"></i> Register Credentials
+                <a href="{% url 'signup' %}" class="btn-outline-custom">
+                    Register
                 </a>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="error-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <i class="fa-solid fa-train me-1 text-primary"></i> <strong>RAIL-SAHAYAK</strong> • Indian Railways
-            </div>
-            <div>
-                <span>Support: Section Controller Desk</span>
             </div>
         </div>
     </div>
-</div>
 
 </body>
 </html>

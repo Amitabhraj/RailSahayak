@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 
 class LoginRequired404Middleware:
@@ -20,6 +20,10 @@ class LoginRequired404Middleware:
         path = request.path_info
 
         if not request.user.is_authenticated:
+            # Redirect unauthenticated visits on "/" to login page instead of showing 404
+            if path == '/':
+                return redirect('login')
+
             is_public = any(path.startswith(prefix) for prefix in self.PUBLIC_URL_PREFIXES)
             if not is_public:
                 if path.startswith('/api/'):

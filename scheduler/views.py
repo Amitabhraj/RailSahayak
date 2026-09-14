@@ -27,11 +27,14 @@ def custom_404_view(request, exception=None):
 
 def login_required_404(view_func):
     """
-    Backend Security: Whenever user is not logged in, return 404 Error.
+    Backend Security: Whenever user is not logged in, return 404 Error,
+    except for root "/" which redirects to login.
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
+            if request.path == '/':
+                return redirect('login')
             if request.path.startswith('/api/'):
                 return JsonResponse({
                     'status': 'error',

@@ -3,165 +3,77 @@
 {% block title %}Availability & Analytics | RAIL-SAHAYAK{% endblock %}
 
 {% block content %}
-<div class="container-fluid p-0">
-    <!-- Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-        <div>
-            <h2 class="fw-bold mb-1 text-dark">Infrastructure Availability & Analytics</h2>
-            <p class="text-muted mb-0 small">
-                Data-driven tracking of asset downtime reduction, multi-department cooperation synergy, and punctuality safety
-            </p>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-2">
-                <i class="fa-solid fa-chart-line me-1"></i> Continuous Learning Active
-            </span>
-        </div>
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Infrastructure Availability & Analytics</h3>
+        <p class="text-muted small">Tracking corridor downtime, block coordination, and department metrics.</p>
     </div>
 
-    <!-- Row 1: Charts -->
-    <div class="row g-4 mb-4">
-        <!-- Chart 1: Downtime Reduction -->
-        <div class="col-lg-8">
-            <div class="card-rail h-100">
-                <div class="card-rail-header">
-                    <h5 class="card-rail-title">
-                        <i class="fa-solid fa-chart-column text-success"></i> Corridor Downtime Reduction (Hours Saved)
-                    </h5>
-                    <span class="badge bg-secondary">Live Audit</span>
-                </div>
-                <div class="card-rail-body">
-                    <div style="height: 280px;">
-                        <canvas id="downtimeChart"></canvas>
-                    </div>
+    <!-- Charts Section -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-7">
+            <div class="card border p-3 h-100">
+                <h6 class="fw-bold mb-3 text-dark">Downtime Hours Eliminated by Corridor</h6>
+                <div style="height: 250px;">
+                    <canvas id="downtimeChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Chart 2: Department Collaboration Donut -->
-        <div class="col-lg-4">
-            <div class="card-rail h-100">
-                <div class="card-rail-header">
-                    <h5 class="card-rail-title">
-                        <i class="fa-solid fa-chart-pie text-primary"></i> Department Participation
-                    </h5>
-                </div>
-                <div class="card-rail-body d-flex flex-column align-items-center justify-content-center">
-                    <div style="height: 220px; width: 100%;">
-                        <canvas id="deptDonutChart"></canvas>
-                    </div>
-                    <div class="small text-muted text-center mt-3">
-                        Distribution of maintenance activities synchronized in scheduled blocks.
-                    </div>
+        <div class="col-md-5">
+            <div class="card border p-3 h-100">
+                <h6 class="fw-bold mb-3 text-dark">Department Distribution</h6>
+                <div style="height: 220px;">
+                    <canvas id="deptDonutChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Row 2: Corridor-by-Corridor Breakdown Table -->
-    <div class="card-rail mb-4">
-        <div class="card-rail-header">
-            <h5 class="card-rail-title">
-                <i class="fa-solid fa-layer-group text-primary"></i> Corridor Coordination Performance Matrix
-            </h5>
+    <!-- Corridor Performance Table -->
+    <div class="card border mb-4">
+        <div class="card-header bg-light py-2">
+            <h6 class="fw-bold mb-0 text-dark">Corridor Performance Summary</h6>
         </div>
-        <div class="card-rail-body p-0">
-            <div class="table-responsive">
-                <table class="table-rail mb-0">
-                    <thead>
-                        <tr>
-                            <th>Corridor Code & Name</th>
-                            <th>Traffic Density (GMT)</th>
-                            <th>Total Blocks Granted</th>
-                            <th>Coordinated Shadow Blocks</th>
-                            <th>Coordination Ratio</th>
-                            <th>Track Downtime Saved</th>
-                            <th>Asset Availability Impact</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for c in corridor_stats %}
-                        <tr>
-                            <td>
-                                <div class="fw-bold text-dark">{{ c.code }}</div>
-                                <div class="small text-muted">{{ c.name }}</div>
-                            </td>
-                            <td>
-                                <span class="badge bg-light border text-dark">{{ c.gmt }} GMT</span>
-                            </td>
-                            <td class="font-monospace text-dark small fw-bold">{{ c.blocks_count }} blocks</td>
-                            <td>
-                                <span class="badge badge-synergy">
-                                    <i class="fa-solid fa-bolt me-1"></i> {{ c.coordinated_count }} shadow blocks
-                                </span>
-                            </td>
-                            <td>
-                                {% if c.blocks_count > 0 %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress bg-light border flex-grow-1" style="height: 6px; width: 70px;">
-                                            <div class="progress-bar bg-success" style="width: {% widthratio c.coordinated_count c.blocks_count 100 %}%;"></div>
-                                        </div>
-                                        <span class="small font-monospace text-success fw-bold">{% widthratio c.coordinated_count c.blocks_count 100 %}%</span>
-                                    </div>
-                                {% else %}
-                                    <span class="text-muted small">N/A</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="fw-bold text-success font-monospace">+{{ c.saved_hours }} hrs</div>
-                                <div class="small text-muted">Eliminated line closure</div>
-                            </td>
-                            <td>
-                                <span class="badge bg-success bg-opacity-25 text-success border border-success">
-                                    +3.8% Uptime Boost
-                                </span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">No corridor statistics available.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Row 3: Methodology and Mathematical Formulation -->
-    <div class="card-rail">
-        <div class="card-rail-header">
-            <h5 class="card-rail-title">
-                <i class="fa-solid fa-square-root-variable text-warning"></i> Optimization Formulation & Objective Weights
-            </h5>
-        </div>
-        <div class="card-rail-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="p-3 rounded bg-light border h-100">
-                        <div class="text-primary fw-bold small text-uppercase mb-2">1. Criticality Risk Index (CRI)</div>
-                        <p class="text-muted small mb-0">
-                            Evaluates \(S = B_{\text{severity}} + \min(25, 1.5 \times \text{overdue}) + \Delta_{\text{TSR}} + \gamma_{\text{GMT}}\). Emergency defects automatically receive top priority scores exceeding 90.
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="p-3 rounded bg-light border h-100">
-                        <div class="text-success fw-bold small text-uppercase mb-2">2. Shadow Bundling Factor</div>
-                        <p class="text-muted small mb-0">
-                            Spatial clustering checks \(\Delta km \le 10.0\) and line compatibility. When Civil Engineering occupies a track, Electrical OHE and S&T works are bundled into that exact window to eliminate separate closures.
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="p-3 rounded bg-light border h-100">
-                        <div class="text-warning fw-bold small text-uppercase mb-2">3. Timetable Constraint Solver</div>
-                        <p class="text-muted small mb-0">
-                            Integrates Control Office Application (COA) timetables to schedule blocks strictly during the gazetted 01:00-04:30 night window and midday lulls, guaranteeing zero detention for high-priority trains like Rajdhani and Vande Bharat.
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0 text-nowrap">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th>Corridor</th>
+                        <th>Traffic (GMT)</th>
+                        <th>Total Blocks</th>
+                        <th>Shadow Blocks</th>
+                        <th>Coordination %</th>
+                        <th>Hours Saved</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    {% for c in corridor_stats %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ c.code }}</div>
+                            <div class="text-muted extra-small">{{ c.name }}</div>
+                        </td>
+                        <td>{{ c.gmt }} GMT</td>
+                        <td>{{ c.blocks_count }}</td>
+                        <td>{{ c.coordinated_count }}</td>
+                        <td>
+                            {% if c.blocks_count > 0 %}
+                                {% widthratio c.coordinated_count c.blocks_count 100 %}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-success">{{ c.saved_hours }} hrs</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-3 text-muted">No corridor statistics available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -170,7 +82,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Downtime Saved Bar Chart
+    // 1. Bar Chart
     const ctxBar = document.getElementById('downtimeChart')?.getContext('2d');
     if (ctxBar) {
         new Chart(ctxBar, {
@@ -179,16 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: [{% for c in corridor_stats %}'{{ c.code }}',{% endfor %}],
                 datasets: [
                     {
-                        label: 'Downtime Hours Eliminated by AI',
+                        label: 'Hours Saved',
                         data: [{% for c in corridor_stats %}{{ c.saved_hours }},{% endfor %}],
-                        backgroundColor: '#16a34a',
-                        borderRadius: 4,
+                        backgroundColor: '#198754'
                     },
                     {
-                        label: 'Total Blocks Granted',
+                        label: 'Total Blocks',
                         data: [{% for c in corridor_stats %}{{ c.blocks_count }},{% endfor %}],
-                        backgroundColor: '#213d77',
-                        borderRadius: 4,
+                        backgroundColor: '#0d6efd'
                     }
                 ]
             },
@@ -196,48 +106,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        labels: { color: '#212529', font: { family: 'Arial, Helvetica, sans-serif', weight: 'bold' } }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#333333', font: { family: 'Arial, Helvetica, sans-serif' } },
-                        grid: { color: '#e5e7eb' }
-                    },
-                    y: {
-                        ticks: { color: '#333333', font: { family: 'Arial, Helvetica, sans-serif' } },
-                        grid: { color: '#e5e7eb' }
-                    }
+                    legend: { position: 'top' }
                 }
             }
         });
     }
 
-    // 2. Department Donut Chart
+    // 2. Donut Chart
     const ctxDonut = document.getElementById('deptDonutChart')?.getContext('2d');
     if (ctxDonut) {
         new Chart(ctxDonut, {
             type: 'doughnut',
             data: {
-                labels: ['TMS (Engineering)', 'SMMS (Signal & Telecom)', 'TDMS (Electrical / OHE)'],
+                labels: ['Engineering (TMS)', 'Signal & Telecom (SMMS)', 'Electrical (TDMS)'],
                 datasets: [{
                     data: [{{ tms_blocks|default:4 }}, {{ smms_blocks|default:3 }}, {{ tdms_blocks|default:3 }}],
-                    backgroundColor: ['#0284c7', '#d97706', '#7e22ce'],
-                    borderColor: '#ffffff',
-                    borderWidth: 2
+                    backgroundColor: ['#0d6efd', '#ffc107', '#6f42c1']
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#212529', boxWidth: 12, font: { size: 11, family: 'Arial, Helvetica, sans-serif' } }
-                    }
-                },
-                cutout: '68%'
+                    legend: { position: 'bottom' }
+                }
             }
         });
     }

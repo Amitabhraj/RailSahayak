@@ -1,57 +1,49 @@
 {% extends 'base.html' %}
 
-{% block title %}Department BDMS Block Portal | RAIL-SAHAYAK{% endblock %}
+{% block title %}Department Block Portal | RAIL-SAHAYAK{% endblock %}
 
 {% block content %}
-<div class="container-fluid p-0">
+<div class="container my-4">
     <!-- Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <h2 class="fw-bold mb-1 text-dark">Department BDMS Maintenance Portal</h2>
-            <p class="text-muted mb-0 small">
-                Demanding and tracking infrastructure blocks for Engineering (P-Way), Signal & Telecom, and Traction Distribution
-            </p>
+            <h3 class="fw-bold text-dark mb-1">Department Maintenance Portal</h3>
+            <p class="text-muted small mb-0">Lodge and view maintenance block demands for track, signaling, and electrical works.</p>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <!-- Department Selector Pills -->
-            <div class="btn-group">
-                <a href="?dept=TMS" class="btn {% if active_dept == 'TMS' %}btn-rail-primary fw-bold{% else %}btn-outline-secondary{% endif %}">
-                    <i class="fa-solid fa-wrench me-1"></i> Engineering (TMS)
-                </a>
-                <a href="?dept=SMMS" class="btn {% if active_dept == 'SMMS' %}btn-rail-primary fw-bold{% else %}btn-outline-secondary{% endif %}">
-                    <i class="fa-solid fa-traffic-light me-1"></i> Signalling (SMMS)
-                </a>
-                <a href="?dept=TDMS" class="btn {% if active_dept == 'TDMS' %}btn-rail-primary fw-bold{% else %}btn-outline-secondary{% endif %}">
-                    <i class="fa-solid fa-bolt me-1"></i> Electrical (TDMS)
-                </a>
-            </div>
+        <!-- Department Selector -->
+        <div class="btn-group">
+            <a href="?dept=TMS" class="btn btn-sm {% if active_dept == 'TMS' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                Engineering (TMS)
+            </a>
+            <a href="?dept=SMMS" class="btn btn-sm {% if active_dept == 'SMMS' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                Signalling (SMMS)
+            </a>
+            <a href="?dept=TDMS" class="btn btn-sm {% if active_dept == 'TDMS' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                Electrical (TDMS)
+            </a>
         </div>
     </div>
 
     <div class="row g-4">
-        <!-- Left Col: Lodge Block Demand Form -->
+        <!-- Left: Lodge Block Demand Form -->
         <div class="col-lg-5">
-            <div class="card-rail">
-                <div class="card-rail-header">
-                    <h5 class="card-rail-title">
-                        <i class="fa-solid fa-pen-to-square text-primary"></i> Lodge Block Demand (BDMS)
-                    </h5>
-                    <span class="badge {% if active_dept == 'TMS' %}badge-tms{% elif active_dept == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}">
-                        {{ active_dept }}
-                    </span>
+            <div class="card border">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="fw-bold mb-0 text-dark">Lodge Block Demand</h6>
+                    <span class="badge bg-secondary">{{ active_dept }}</span>
                 </div>
-                <div class="card-rail-body">
+                <div class="card-body">
                     <form id="submitDemandForm">
                         <input type="hidden" id="demandSourceSystem" value="{{ active_dept }}">
 
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label text-dark small fw-bold">Demand Reference ID</label>
-                                <input type="text" id="demandIdInput" class="form-control form-control-sm form-control-rail font-monospace" value="{{ active_dept }}-2026-{% now 'mdHi' %}" required>
+                                <label class="form-label text-dark small fw-bold">Reference ID</label>
+                                <input type="text" id="demandIdInput" class="form-control form-control-sm font-monospace" value="{{ active_dept }}-2026-{% now 'mdHi' %}" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-dark small fw-bold">Corridor Section</label>
-                                <select class="form-select form-select-sm form-select-rail" id="demandCorridorSelect" required>
+                                <select class="form-select form-select-sm" id="demandCorridorSelect" required>
                                     <option value="" disabled selected>Select Corridor</option>
                                     {% for c in corridors %}
                                     <option value="{{ c.id }}">{{ c.code }} ({{ c.name|truncatechars:18 }})</option>
@@ -63,167 +55,144 @@
                         <div class="row g-2 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label text-dark small fw-bold">Track Line</label>
-                                <select class="form-select form-select-sm form-select-rail" id="demandTrackLine">
-                                    <option value="UP">UP Main Line</option>
-                                    <option value="DN">DN Main Line</option>
-                                    <option value="BOTH">Both Lines</option>
-                                    <option value="YARD">Yard / Loops</option>
+                                <select class="form-select form-select-sm" id="demandTrackLine">
+                                    <option value="UP">UP Main</option>
+                                    <option value="DN">DN Main</option>
+                                    <option value="BOTH">Both</option>
+                                    <option value="YARD">Yard</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-dark small fw-bold">From KM</label>
-                                <input type="number" step="0.1" class="form-control form-control-sm form-control-rail" id="demandKmStart" placeholder="e.g. 125.0" required>
+                                <input type="number" step="0.1" class="form-control form-control-sm" id="demandKmStart" placeholder="125.0" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-dark small fw-bold">To KM</label>
-                                <input type="number" step="0.1" class="form-control form-control-sm form-control-rail" id="demandKmEnd" placeholder="e.g. 128.0" required>
-                            </div>
-                        </div>
-
-                        <!-- Live AI Pre-Check Notification Box -->
-                        <div id="coLocationSuggestionsBox" class="mb-3">
-                            <div class="text-muted small">
-                                <i class="fa-solid fa-circle-info me-1"></i> Enter corridor and KM markers above to scan for potential multi-department shadow blocks.
+                                <input type="number" step="0.1" class="form-control form-control-sm" id="demandKmEnd" placeholder="128.0" required>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-dark small fw-bold">Activity Name</label>
-                            <input type="text" class="form-control form-control-sm form-control-rail" id="demandActivityName" placeholder="e.g. Turnout 204 Overhaul or OHE Contact Renewal" required>
+                            <input type="text" class="form-control form-control-sm" id="demandActivityName" placeholder="e.g. Turnout Overhaul" required>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label text-dark small fw-bold">Defect & Justification</label>
-                            <textarea class="form-control form-control-sm form-control-rail" id="demandDefectDesc" rows="2" placeholder="Describe defect severity, USFD flaw, wire wear, or safety hazard..." required></textarea>
+                            <label class="form-label text-dark small fw-bold">Justification</label>
+                            <textarea class="form-control form-control-sm" id="demandDefectDesc" rows="2" placeholder="Brief description of work..." required></textarea>
                         </div>
 
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label text-dark small fw-bold">Defect Criticality</label>
-                                <select class="form-select form-select-sm form-select-rail" id="demandCriticality">
-                                    <option value="URGENT_I" selected>Category 1: Urgent / Safety Risk</option>
-                                    <option value="NORMAL_II">Category 2: Cyclic Maintenance Due</option>
-                                    <option value="ROUTINE_III">Category 3: Routine Preventive</option>
-                                    <option value="EMERGENCY">Category 0: EMERGENCY DEFECT</option>
+                                <label class="form-label text-dark small fw-bold">Priority</label>
+                                <select class="form-select form-select-sm" id="demandCriticality">
+                                    <option value="URGENT_I" selected>Category 1: Urgent</option>
+                                    <option value="NORMAL_II">Category 2: Planned</option>
+                                    <option value="ROUTINE_III">Category 3: Routine</option>
+                                    <option value="EMERGENCY">Category 0: Emergency</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-dark small fw-bold">Duration (Hours)</label>
-                                <input type="number" step="0.5" class="form-control form-control-sm form-control-rail" id="demandDuration" value="3.0" required>
+                                <input type="number" step="0.5" class="form-control form-control-sm" id="demandDuration" value="3.0" required>
                             </div>
                         </div>
 
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label text-dark small fw-bold">Target Due Date</label>
-                                <input type="date" class="form-control form-control-sm form-control-rail" id="demandDueDate" required>
+                                <label class="form-label text-dark small fw-bold">Target Date</label>
+                                <input type="date" class="form-control form-control-sm" id="demandDueDate" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-dark small fw-bold">Assigned Equipment</label>
-                                <select class="form-select form-select-sm form-select-rail" id="demandMachineSelect">
+                                <label class="form-label text-dark small fw-bold">Equipment</label>
+                                <select class="form-select form-select-sm" id="demandMachineSelect">
                                     <option value="">None / Manual Gang</option>
                                     {% for m in machines %}
-                                    <option value="{{ m.id }}">{{ m.machine_id }} ({{ m.get_machine_type_display }})</option>
+                                    <option value="{{ m.id }}">{{ m.machine_id }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                         </div>
 
-                        <div class="p-3 mb-3 rounded bg-light border">
-                            <div class="form-check form-switch mb-2">
+                        <div class="p-2 mb-3 bg-light border rounded">
+                            <div class="form-check form-switch mb-1">
                                 <input class="form-check-input" type="checkbox" id="demandPowerBlockCheck" {% if active_dept == 'TDMS' %}checked{% endif %}>
                                 <label class="form-check-label text-dark small" for="demandPowerBlockCheck">
-                                    Requires 25kV OHE Power Block (TRD Traction Cut)
+                                    Power Block Required
                                 </label>
                             </div>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="demandTrafficBlockCheck" checked>
                                 <label class="form-check-label text-dark small" for="demandTrafficBlockCheck">
-                                    Requires Traffic Block (No trains on track)
+                                    Traffic Block Required
                                 </label>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-rail-primary w-100 py-2" id="btnSubmitDemand">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Submit Demand to AI Planning Engine
+                        <button type="submit" class="btn btn-primary btn-sm w-100 py-2" id="btnSubmitDemand">
+                            Submit Demand
                         </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Right Col: Demands lodged in this department -->
+        <!-- Right: Registered Demands Table -->
         <div class="col-lg-7">
-            <div class="card-rail">
-                <div class="card-rail-header">
-                    <h5 class="card-rail-title">
-                        <i class="fa-solid fa-table-list text-primary"></i> Active {{ active_dept }} Demand Registry
-                    </h5>
-                    <span class="badge bg-secondary">{{ demands|length }} Registered</span>
+            <div class="card border">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="fw-bold mb-0 text-dark">Active {{ active_dept }} Demands</h6>
+                    <span class="badge bg-secondary">{{ demands|length }} Total</span>
                 </div>
-                <div class="card-rail-body p-0">
-                    <div class="table-responsive">
-                        <table class="table-rail mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Demand ID</th>
-                                    <th>Location & Line</th>
-                                    <th>Activity & Machine</th>
-                                    <th>Severity</th>
-                                    <th>AI Priority</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for d in demands %}
-                                <tr>
-                                    <td class="font-monospace text-dark small fw-bold">{{ d.demand_id }}</td>
-                                    <td>
-                                        <span class="text-primary small fw-bold">{{ d.corridor.code }}</span>
-                                        <div class="small text-dark">km {{ d.km_start|floatformat:1 }}-{{ d.km_end|floatformat:1 }}</div>
-                                        <div class="small text-muted">{{ d.track_line }} Line</div>
-                                    </td>
-                                    <td>
-                                        <div class="small text-dark fw-bold">{{ d.activity_name }}</div>
-                                        {% if d.assigned_machine %}
-                                            <span class="badge bg-secondary small">{{ d.assigned_machine.machine_id }}</span>
-                                        {% endif %}
-                                        <div class="small text-muted">{{ d.duration_hours }}h requested</div>
-                                    </td>
-                                    <td>
-                                        <span class="badge {% if d.criticality == 'EMERGENCY' %}badge-emergency{% elif d.criticality == 'URGENT_I' %}badge-smms{% else %}bg-secondary{% endif %}">
-                                            {{ d.get_criticality_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-bold font-monospace small {% if d.ai_priority_score >= 80 %}text-danger{% elif d.ai_priority_score >= 60 %}text-warning{% else %}text-primary{% endif %}">
-                                            {{ d.ai_priority_score|floatformat:1 }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% if d.status == 'BUNDLED' %}
-                                            <span class="badge badge-synergy">
-                                                <i class="fa-solid fa-bolt me-1"></i> Coordinated Bundled
-                                            </span>
-                                        {% elif d.status == 'SCHEDULED' %}
-                                            <span class="badge bg-success bg-opacity-25 text-success border border-success">
-                                                Scheduled
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning">
-                                                Pending
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No demands registered for this department.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0 text-nowrap">
+                        <thead class="table-light small text-uppercase">
+                            <tr>
+                                <th>Demand ID</th>
+                                <th>Location</th>
+                                <th>Activity</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="small">
+                            {% for d in demands %}
+                            <tr>
+                                <td class="font-monospace fw-bold">{{ d.demand_id }}</td>
+                                <td>
+                                    <div class="fw-bold text-primary">{{ d.corridor.code }}</div>
+                                    <div>KM {{ d.km_start|floatformat:1 }} - {{ d.km_end|floatformat:1 }} ({{ d.track_line }})</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ d.activity_name }}</div>
+                                    <div class="text-muted extra-small">{{ d.duration_hours }} hrs requested</div>
+                                </td>
+                                <td>
+                                    {% if d.criticality == 'EMERGENCY' %}
+                                        <span class="badge bg-danger">Emergency</span>
+                                    {% elif d.criticality == 'URGENT_I' %}
+                                        <span class="badge bg-warning text-dark">Urgent</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Routine</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if d.status == 'SCHEDULED' %}
+                                        <span class="badge bg-success">Scheduled</span>
+                                    {% elif d.status == 'BUNDLED' %}
+                                        <span class="badge bg-info text-dark">Bundled</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3 text-muted">No demands registered for this department.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -242,14 +211,14 @@ document.addEventListener('DOMContentLoaded', () => {
         dueInput.value = d.toISOString().split('T')[0];
     }
 
-    // Submit Demand AJAX Form Handler
+    // Form Submit Handler
     const form = document.getElementById('submitDemandForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitDemand');
             btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Calculating AI Criticality & Matching Slots...`;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Submitting...`;
 
             const payload = {
                 demand_id: document.getElementById('demandIdInput').value,
@@ -281,17 +250,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    showToast(`Demand Registered! AI Assigned Priority Score: ${result.ai_score}. Found ${result.co_located_candidates.length} shadow candidates.`, 'success');
-                    setTimeout(() => window.location.reload(), 1500);
+                    showToast('Demand registered successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1200);
                 } else {
                     showToast(result.message || 'Submission failed', 'danger');
                     btn.disabled = false;
-                    btn.innerHTML = `<i class="fa-solid fa-paper-plane me-1"></i> Submit Demand to AI Planning Engine`;
+                    btn.textContent = 'Submit Demand';
                 }
             } catch (err) {
                 showToast(err.message, 'danger');
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-paper-plane me-1"></i> Submit Demand to AI Planning Engine`;
+                btn.textContent = 'Submit Demand';
             }
         });
     }

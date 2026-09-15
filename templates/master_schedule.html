@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
-{% block title %}Master Block Schedule & Gantt | RAIL-SAHAYAK{% endblock %}
+{% block title %}Master Block Schedule & Gantt | Rail-Sync AI{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-0">
-    <!-- Header -->
+    <!-- Header & Quick Actions -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
             <h2 class="fw-bold mb-1 text-dark">Master Infrastructure Block Schedule</h2>
@@ -13,16 +14,19 @@
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-synergy px-3 py-2 me-2">
+                <i class="fa-solid fa-link me-1"></i> {{ coordinated_count }} Bundled Blocks
+            </span>
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                <i class="fa-solid fa-print me-1"></i> Print / Export Program
+                <i class="fa-solid fa-print me-1"></i> Print Program
             </button>
             <button type="button" class="btn btn-rail-synergy btn-sm" data-bs-toggle="modal" data-bs-target="#runOptimizerModal">
-                <i class="fa-solid fa-bolt me-1"></i> Re-Optimize Schedule
+                <i class="fa-solid fa-bolt me-1"></i> Re-Optimize
             </button>
         </div>
     </div>
 
-    <!-- Filter Bar -->
+    <!-- Integrated Filter & Horizon Control -->
     <div class="card-rail mb-4">
         <div class="card-rail-body p-3">
             <form method="GET" class="row g-3 align-items-center">
@@ -35,12 +39,12 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label text-dark small fw-bold mb-1">Corridor Section</label>
                     <select name="corridor" class="form-select form-select-sm form-select-rail" onchange="this.form.submit()">
                         <option value="ALL" {% if corridor_filter == 'ALL' %}selected{% endif %}>All Corridors</option>
                         {% for c in corridors %}
-                        <option value="{{ c.code }}" {% if corridor_filter == c.code %}selected{% endif %}>{{ c.code }} - {{ c.name|truncatechars:25 }}</option>
+                        <option value="{{ c.code }}" {% if corridor_filter == c.code %}selected{% endif %}>{{ c.code }} - {{ c.name|truncatechars:30 }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -55,85 +59,908 @@
                     </select>
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end justify-content-end">
-                    <div class="text-end">
-                        <span class="badge badge-synergy px-3 py-2">
-                            <i class="fa-solid fa-link me-1"></i> {{ coordinated_count }} Bundled Blocks
-                        </span>
-                    </div>
+                <div class="col-md-2 text-end pt-3">
+                    <a href="?" class="btn btn-sm btn-link text-muted text-decoration-none">Reset Filters</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Section 1: Visual 24-Hour Corridor Gantt / Timeline -->
-    <div class="card-rail mb-4">
-        <div class="card-rail-header flex-wrap gap-2">
-            <h5 class="card-rail-title">
-                <i class="fa-solid fa-chart-gantt text-primary"></i> Interactive Corridor Timeline (24-Hour Slots)
-            </h5>
-            <div class="d-flex align-items-center gap-3 small text-muted">
-                <span class="d-flex align-items-center gap-1"><span class="badge badge-synergy p-1"></span> Coordinated Shadow Block</span>
-                <span class="d-flex align-items-center gap-1"><span class="badge badge-tms p-1"></span> TMS (Track)</span>
-                <span class="d-flex align-items-center gap-1"><span class="badge badge-smms p-1"></span> SMMS (Signal)</span>
-                <span class="d-flex align-items-center gap-1"><span class="badge badge-tdms p-1"></span> TDMS (OHE)</span>
+<!-- =====================================================
+     MASTER SCHEDULE TIMELINES
+     ===================================================== -->
+
+<div class="card-rail mb-4">
+
+    <div class="card-rail-header">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <ul class="nav nav-tabs card-header-tabs border-0">
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold"
+                            data-bs-toggle="tab"
+                            data-bs-target="#daily-timeline">
+                        <i class="fa-solid fa-clock text-primary me-1"></i>
+                        24-Hour Timeline
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link fw-bold"
+                            data-bs-toggle="tab"
+                            data-bs-target="#weekly-timeline">
+                        <i class="fa-solid fa-calendar-week text-primary me-1"></i>
+                        Weekly Timeline
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link fw-bold"
+                            data-bs-toggle="tab"
+                            data-bs-target="#monthly-timeline">
+                        <i class="fa-solid fa-calendar-days text-primary me-1"></i>
+                        Monthly Timeline
+                    </button>
+                </li>
+            </ul>
+
+            <div class="small text-muted">
+                <span class="badge badge-synergy">Coordinated</span>
+                <span class="badge badge-tms">TMS</span>
+                <span class="badge badge-smms">SMMS</span>
+                <span class="badge badge-tdms">TDMS</span>
             </div>
-        </div>
 
-        <div class="card-rail-body p-3">
-            <div class="gantt-container">
-                <!-- 24 Hour Header -->
-                <div class="gantt-header">
-                    <div class="fw-bold text-start ps-3">Corridor & Date</div>
-                    {% for h in "012345678901234567890123"|make_list %}
-                    <div>{{ forloop.counter0|stringformat:"02d" }}:00</div>
-                    {% endfor %}
-                </div>
-
-                <!-- Rows per date & corridor -->
-                {% for d_str, day_blocks in dates_grouped.items %}
-                    {% for block in day_blocks %}
-                    <div class="gantt-row">
-                        <div class="gantt-corridor-label">
-                            <div class="text-dark fw-bold">{{ block.corridor.code }}</div>
-                            <div class="text-muted" style="font-size: 0.7rem;">{{ block.scheduled_date|date:"d M" }} • {{ block.track_line }} Line</div>
-                        </div>
-
-                        <!-- 24-Hour grid background stripes -->
-                        {% for h in "012345678901234567890123"|make_list %}
-                        <div style="border-right: 1px dashed #cbd5e1; height: 100%;"></div>
-                        {% endfor %}
-
-                        <!-- Block Capsule overlay -->
-                        <!-- Calculate visual percentage positioning based on start_time and duration -->
-                        <div class="gantt-block-pill {% if block.is_coordinated %}badge-synergy{% elif block.primary_department == 'TMS' %}badge-tms{% elif block.primary_department == 'SMMS' %}badge-smms{% else %}badge-tdms{% endif %}"
-                             style="left: calc(200px + ({{ block.start_time.hour }} + {{ block.start_time.minute }}/60) * ((100% - 200px) / 24)); 
-                                    width: calc({{ block.duration_hours }} * ((100% - 200px) / 24));"
-                             title="{{ block.block_id }} ({{ block.start_time|time:'H:i' }}-{{ block.end_time|time:'H:i' }}) {{ block.participating_departments }}"
-                             onclick="showBlockModal('{{ block.block_id }}', '{{ block.corridor.code }}', '{{ block.scheduled_date|date:'d M Y' }}', '{{ block.start_time|time:'H:i' }} - {{ block.end_time|time:'H:i' }}', '{{ block.duration_hours }} hrs', '{{ block.track_line }} Line (km {{ block.km_start|floatformat:1 }} to {{ block.km_end|floatformat:1 }})', '{{ block.participating_departments }}', '{{ block.estimated_downtime_saved_minutes }} mins', '{{ block.primary_demand.activity_name|escapejs }}', '{{ block.ai_optimization_notes|escapejs }}')">
-                            <div class="fw-bold" style="font-size: 0.72rem;">{{ block.block_id }}</div>
-                            <div style="font-size: 0.65rem;" class="opacity-90">
-                                {% if block.is_coordinated %}<i class="fa-solid fa-bolt"></i>{% endif %}
-                                {{ block.participating_departments }} ({{ block.start_time|time:"H:i" }}-{{ block.end_time|time:"H:i" }})
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% empty %}
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-calendar-xmark fs-2 mb-2"></i>
-                    <div>No scheduled blocks match current criteria.</div>
-                </div>
-                {% endfor %}
-            </div>
         </div>
     </div>
 
-    <!-- Section 2: Master Program Table -->
+
+    <div class="card-rail-body p-3 tab-content">
+
+
+        <!-- ==================== DAILY ==================== -->
+
+        <div class="tab-pane fade show active" id="daily-timeline">
+
+            <div class="timeline-toolbar">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="fa-solid fa-calendar-day text-primary me-2"></i>
+                        Today's Timeline
+                    </h5>
+                    <small class="text-muted" id="todayLabel"></small>
+                </div>
+
+                <button class="btn btn-outline-primary btn-sm"
+                        onclick="scrollNow()">
+                    <i class="fa-solid fa-location-crosshairs me-1"></i>
+                    Current Time
+                </button>
+            </div>
+
+            <div class="timeline-scroll">
+                <div class="daily-gantt">
+
+                    <div class="daily-header">
+                        <div class="timeline-label-header">Corridor</div>
+
+                        <div class="hour-grid">
+                            {% for h in "012345678901234567890123"|make_list %}
+                                <div class="hour-cell">
+                                    {{ forloop.counter0|stringformat:"02d" }}:00
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+
+                    {% for block in blocks %}
+
+                    <div class="daily-row"
+                         data-date="{{ block.scheduled_date|date:'Y-m-d' }}">
+
+                        <div class="timeline-label">
+                            <strong class="text-primary">
+                                {{ block.corridor.code }}
+                            </strong>
+                            <small class="d-block text-muted">
+                                {{ block.track_line }} Line
+                            </small>
+                            <small class="d-block text-muted">
+                                {{ block.scheduled_date|date:"d M Y" }}
+                            </small>
+                        </div>
+
+                        <div class="hour-grid">
+
+                            {% for h in "012345678901234567890123"|make_list %}
+                                <div class="hour-cell"></div>
+                            {% endfor %}
+
+                            <div class="timeline-block
+                                {% if block.is_coordinated %}badge-synergy
+                                {% elif block.primary_department == 'TMS' %}badge-tms
+                                {% elif block.primary_department == 'SMMS' %}badge-smms
+                                {% else %}badge-tdms{% endif %}"
+                                data-date="{{ block.scheduled_date|date:'Y-m-d' }}"
+                                data-start="{{ block.start_time|time:'H:i' }}"
+                                data-duration="{{ block.duration_hours }}"
+                                onclick="showBlockModal(
+                                    '{{ block.block_id }}',
+                                    '{{ block.corridor.code }}',
+                                    '{{ block.scheduled_date|date:'d M Y' }}',
+                                    '{{ block.start_time|time:'H:i' }} - {{ block.end_time|time:'H:i' }}',
+                                    '{{ block.duration_hours }} hrs',
+                                    '{{ block.track_line }} Line (km {{ block.km_start|floatformat:1 }} to {{ block.km_end|floatformat:1 }})',
+                                    '{{ block.participating_departments }}',
+                                    '{{ block.estimated_downtime_saved_minutes }} mins',
+                                    '{{ block.primary_demand.activity_name|escapejs }}',
+                                    '{{ block.ai_optimization_notes|escapejs }}'
+                                )">
+
+                                <strong>{{ block.block_id }}</strong>
+                                <small>
+                                    {{ block.start_time|time:"H:i" }} -
+                                    {{ block.end_time|time:"H:i" }}
+                                </small>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {% empty %}
+
+                    <div class="text-center text-muted py-5">
+                        No scheduled blocks found.
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==================== WEEKLY ==================== -->
+
+        <div class="tab-pane fade" id="weekly-timeline">
+
+            <div class="timeline-toolbar">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="fa-solid fa-calendar-week text-primary me-2"></i>
+                        This Week
+                    </h5>
+                    <small class="text-muted" id="weekLabel"></small>
+                </div>
+
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm"
+                            onclick="changeWeek(-1)">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <button class="btn btn-outline-primary btn-sm"
+                            onclick="currentWeek()">
+                        Today
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-sm"
+                            onclick="changeWeek(1)">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="timeline-scroll">
+                <div id="weeklyGantt" class="weekly-gantt"></div>
+            </div>
+
+        </div>
+
+
+        <!-- ==================== MONTHLY ==================== -->
+
+        <div class="tab-pane fade" id="monthly-timeline">
+
+            <div class="timeline-toolbar">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="fa-solid fa-calendar-days text-primary me-2"></i>
+                        Monthly Timeline
+                    </h5>
+                    <small class="text-muted" id="monthLabel"></small>
+                </div>
+
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm"
+                            onclick="changeMonth(-1)">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <button class="btn btn-outline-primary btn-sm"
+                            onclick="currentMonth()">
+                        Current Month
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-sm"
+                            onclick="changeMonth(1)">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="timeline-scroll">
+                <div id="monthlyGantt" class="monthly-gantt"></div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =====================================================
+     CSS
+     ===================================================== -->
+
+<style>
+
+.timeline-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-bottom:15px;
+}
+
+.timeline-scroll{
+    width:100%;
+    overflow-x:auto;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    background:#fff;
+}
+
+.daily-gantt{
+    min-width:1450px;
+}
+
+.daily-header,
+.daily-row{
+    display:grid;
+    grid-template-columns:180px 1fr;
+}
+
+.daily-header{
+    min-height:45px;
+    background:#f8fafc;
+    border-bottom:1px solid #cbd5e1;
+}
+
+.timeline-label-header{
+    padding:13px;
+    font-weight:700;
+    border-right:1px solid #cbd5e1;
+}
+
+.timeline-label{
+    padding:10px 12px;
+    background:#f8fafc;
+    border-right:1px solid #cbd5e1;
+}
+
+.daily-row{
+    min-height:70px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+.hour-grid{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(24,minmax(52px,1fr));
+}
+
+.hour-cell{
+    border-right:1px dashed #cbd5e1;
+    min-height:100%;
+    padding:10px 3px;
+    text-align:center;
+    font-size:10px;
+    color:#64748b;
+}
+
+.timeline-block{
+    position:absolute;
+    top:10px;
+    bottom:10px;
+    min-width:70px;
+    padding:6px 8px;
+    border-radius:6px;
+    cursor:pointer;
+    z-index:3;
+    overflow:hidden;
+    box-shadow:0 2px 5px rgba(0,0,0,.1);
+    transition:.15s;
+}
+
+.timeline-block:hover,
+.week-block:hover,
+.month-block:hover{
+    transform:translateY(-2px);
+    box-shadow:0 4px 10px rgba(0,0,0,.18);
+}
+
+.timeline-block small{
+    display:block;
+    font-size:9px;
+}
+
+
+/* WEEK */
+
+.weekly-gantt{
+    min-width:1200px;
+}
+
+.week-header,
+.week-row{
+    display:grid;
+    grid-template-columns:180px repeat(7,1fr);
+}
+
+.week-header{
+    min-height:65px;
+    background:#f8fafc;
+    border-bottom:1px solid #cbd5e1;
+}
+
+.week-corner,
+.week-corridor{
+    padding:15px 12px;
+    font-weight:700;
+    border-right:1px solid #cbd5e1;
+}
+
+.week-day{
+    text-align:center;
+    padding:8px 3px;
+    border-right:1px dashed #cbd5e1;
+}
+
+.week-day.today,
+.week-cell.today{
+    background:rgba(13,110,253,.06);
+}
+
+.week-day small{
+    display:block;
+    color:#64748b;
+}
+
+.week-day strong{
+    font-size:17px;
+}
+
+.week-row{
+    min-height:85px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+.week-cell{
+    position:relative;
+    min-height:85px;
+    border-right:1px dashed #cbd5e1;
+}
+
+.week-block{
+    position:absolute;
+    left:5px;
+    right:5px;
+    min-height:32px;
+    padding:5px 7px;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:10px;
+    overflow:hidden;
+}
+
+.week-block small{
+    display:block;
+    font-size:9px;
+}
+
+
+/* MONTH */
+
+.monthly-gantt{
+    min-width:1500px;
+}
+
+.month-header,
+.month-row{
+    display:grid;
+    grid-template-columns:180px 1fr;
+}
+
+.month-days{
+    display:grid;
+}
+
+.month-header{
+    min-height:55px;
+    background:#f8fafc;
+    border-bottom:1px solid #cbd5e1;
+}
+
+.month-day{
+    text-align:center;
+    padding:8px 2px;
+    font-size:10px;
+    border-right:1px dashed #cbd5e1;
+}
+
+.month-day.today{
+    background:rgba(13,110,253,.08);
+    font-weight:700;
+}
+
+.month-label{
+    padding:12px;
+    background:#f8fafc;
+    border-right:1px solid #cbd5e1;
+}
+
+.month-grid{
+    position:relative;
+    display:grid;
+    min-height:70px;
+}
+
+.month-cell{
+    border-right:1px dashed #cbd5e1;
+}
+
+.month-block{
+    position:absolute;
+    top:12px;
+    bottom:12px;
+    padding:5px 7px;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:10px;
+    overflow:hidden;
+    z-index:2;
+}
+
+@media(max-width:768px){
+    .daily-gantt{min-width:1400px}
+    .weekly-gantt{min-width:1100px}
+    .monthly-gantt{min-width:1300px}
+}
+
+</style>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+     ===================================================== -->
+
+<script>
+
+let weekOffset = 0;
+let monthOffset = 0;
+
+const blocks = [
+    {% for block in blocks %}
+    {
+        id: "{{ block.block_id|escapejs }}",
+        date: "{{ block.scheduled_date|date:'Y-m-d' }}",
+        start: "{{ block.start_time|time:'H:i' }}",
+        end: "{{ block.end_time|time:'H:i' }}",
+        duration: "{{ block.duration_hours }}",
+        corridor: "{{ block.corridor.code|escapejs }}",
+        line: "{{ block.track_line|escapejs }}",
+        dept: "{{ block.participating_departments|escapejs }}",
+        primaryDept: "{{ block.primary_department|escapejs }}",
+        coordinated: {{ block.is_coordinated|yesno:"true,false" }},
+        kmStart: "{{ block.km_start|floatformat:1 }}",
+        kmEnd: "{{ block.km_end|floatformat:1 }}",
+        saved: "{{ block.estimated_downtime_saved_minutes }}",
+        activity: "{{ block.primary_demand.activity_name|escapejs }}",
+        notes: "{{ block.ai_optimization_notes|escapejs }}"
+    },
+    {% endfor %}
+];
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderDaily();
+    renderWeek();
+    renderMonth();
+});
+
+
+function dateKey(d){
+    return d.toISOString().split("T")[0];
+}
+
+
+function formatDate(d){
+    return d.toLocaleDateString("en-IN",{
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+
+function startOfWeek(d){
+    d = new Date(d);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate()-d.getDay());
+    return d;
+}
+
+
+function deptClass(b){
+    if(b.coordinated) return "badge-synergy";
+    if(b.primaryDept==="TMS") return "badge-tms";
+    if(b.primaryDept==="SMMS") return "badge-smms";
+    return "badge-tdms";
+}
+
+
+function openBlock(b){
+    showBlockModal(
+        b.id,
+        b.corridor,
+        formatDate(new Date(b.date+"T00:00:00")),
+        `${b.start} - ${b.end}`,
+        `${b.duration} hrs`,
+        `${b.line} Line (km ${b.kmStart} to ${b.kmEnd})`,
+        b.dept,
+        `${b.saved} mins`,
+        b.activity,
+        b.notes
+    );
+}
+
+
+/* ================= DAILY ================= */
+
+function renderDaily(){
+
+    const today = new Date();
+    const key = dateKey(today);
+
+    document.getElementById("todayLabel").textContent =
+        formatDate(today) + " • TODAY";
+
+    document.querySelectorAll(".daily-row").forEach(row => {
+        row.style.display =
+            row.dataset.date === key ? "grid" : "none";
+    });
+
+    document.querySelectorAll(".timeline-block").forEach(block => {
+
+        if(block.dataset.date !== key){
+            block.style.display="none";
+            return;
+        }
+
+        const [h,m] = block.dataset.start.split(":").map(Number);
+        const start = h + m/60;
+        const width = parseFloat(block.dataset.duration);
+
+        block.style.left =
+            `calc(${start} * (100% / 24))`;
+
+        block.style.width =
+            `calc(${width} * (100% / 24))`;
+    });
+}
+
+
+function scrollNow(){
+
+    const box =
+        document.querySelector("#daily-timeline .timeline-scroll");
+
+    const now = new Date();
+
+    const percent =
+        (now.getHours()*60+now.getMinutes())/(24*60);
+
+    box.scrollLeft =
+        box.scrollWidth*percent -
+        box.clientWidth/2;
+}
+
+
+/* ================= WEEK ================= */
+
+function changeWeek(n){
+    weekOffset += n;
+    renderWeek();
+}
+
+
+function currentWeek(){
+    weekOffset=0;
+    renderWeek();
+}
+
+
+function renderWeek(){
+
+    const box = document.getElementById("weeklyGantt");
+    const today = new Date();
+
+    let start = startOfWeek(today);
+    start.setDate(start.getDate()+weekOffset*7);
+
+    const days = [...Array(7)].map((_,i)=>{
+        const d=new Date(start);
+        d.setDate(start.getDate()+i);
+        return d;
+    });
+
+    document.getElementById("weekLabel").textContent =
+        `${formatDate(days[0])} → ${formatDate(days[6])}`;
+
+
+    const corridors = [...new Set(blocks.map(b=>b.corridor))];
+
+    let html = `
+        <div class="week-header">
+            <div class="week-corner">Corridor</div>
+    `;
+
+    days.forEach(d=>{
+        const todayClass =
+            dateKey(d)===dateKey(today) ? "today" : "";
+
+        html += `
+            <div class="week-day ${todayClass}">
+                <small>${d.toLocaleDateString("en-IN",{weekday:"short"})}</small>
+                <strong>${d.getDate()}</strong>
+                <small>${d.toLocaleDateString("en-IN",{month:"short"})}</small>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+
+    corridors.forEach(corridor=>{
+
+        html += `
+            <div class="week-row">
+                <div class="week-corridor">
+                    <span class="text-primary">${esc(corridor)}</span>
+                </div>
+        `;
+
+        days.forEach(d=>{
+
+            const key=dateKey(d);
+
+            const todayClass =
+                key===dateKey(today) ? "today" : "";
+
+            const dayBlocks =
+                blocks.filter(b =>
+                    b.date===key &&
+                    b.corridor===corridor
+                );
+
+            html += `
+                <div class="week-cell ${todayClass}">
+            `;
+
+            dayBlocks.forEach((b,i)=>{
+
+                html += `
+                    <div
+                        class="week-block ${deptClass(b)}"
+                        style="top:${5+i*38}px"
+                        onclick='openBlock(${JSON.stringify(b)})'>
+
+                        <strong>${b.coordinated?"⚡ ":""}${esc(b.id)}</strong>
+                        <small>${esc(b.start)} - ${esc(b.end)}</small>
+
+                    </div>
+                `;
+
+            });
+
+            html += `</div>`;
+        });
+
+        html += `</div>`;
+    });
+
+    box.innerHTML = html;
+}
+
+
+/* ================= MONTH ================= */
+
+function changeMonth(n){
+    monthOffset += n;
+    renderMonth();
+}
+
+
+function currentMonth(){
+    monthOffset=0;
+    renderMonth();
+}
+
+
+function renderMonth(){
+
+    const box=document.getElementById("monthlyGantt");
+    const today=new Date();
+
+    const monthDate =
+        new Date(
+            today.getFullYear(),
+            today.getMonth()+monthOffset,
+            1
+        );
+
+    const year=monthDate.getFullYear();
+    const month=monthDate.getMonth();
+
+    const totalDays =
+        new Date(year,month+1,0).getDate();
+
+    document.getElementById("monthLabel").textContent =
+        monthDate.toLocaleDateString("en-IN",{
+            month:"long",
+            year:"numeric"
+        });
+
+
+    const corridors=[...new Set(blocks.map(b=>b.corridor))];
+
+    let html=`
+        <div class="month-header">
+
+            <div class="month-label">
+                Corridor
+            </div>
+
+            <div
+                class="month-days"
+                style="
+                    grid-template-columns:
+                    repeat(${totalDays},minmax(42px,1fr))
+                ">
+    `;
+
+
+    for(let day=1;day<=totalDays;day++){
+
+        const d=new Date(year,month,day);
+
+        html+=`
+            <div class="month-day
+                ${dateKey(d)===dateKey(today)?"today":""}">
+
+                <div>
+                    ${d.toLocaleDateString(
+                        "en-IN",
+                        {weekday:"short"}
+                    )}
+                </div>
+
+                <strong>${day}</strong>
+            </div>
+        `;
+    }
+
+
+    html+=`</div></div>`;
+
+
+    corridors.forEach(corridor=>{
+
+        html+=`
+            <div class="month-row">
+
+                <div class="month-label">
+                    <span class="text-primary">
+                        ${esc(corridor)}
+                    </span>
+                </div>
+
+                <div
+                    class="month-grid"
+                    style="
+                        grid-template-columns:
+                        repeat(${totalDays},minmax(42px,1fr))
+                    ">
+        `;
+
+
+        for(let i=0;i<totalDays;i++){
+            html+=`<div class="month-cell"></div>`;
+        }
+
+
+        blocks
+            .filter(b =>
+                b.corridor===corridor &&
+                b.date.startsWith(
+                    `${year}-${String(month+1).padStart(2,"0")}`
+                )
+            )
+            .forEach(b=>{
+
+                const day=parseInt(b.date.split("-")[2]);
+
+                html+=`
+                    <div
+                        class="month-block ${deptClass(b)}"
+                        style="
+                            left:calc(
+                                ${(day-1)/totalDays*100}% + 4px
+                            );
+                            width:calc(
+                                ${100/totalDays}% - 8px
+                            );
+                        "
+                        onclick='openBlock(${JSON.stringify(b)})'>
+
+                        <strong>
+                            ${b.coordinated?"⚡ ":""}${esc(b.id)}
+                        </strong>
+
+                        <div>
+                            ${esc(b.start)} - ${esc(b.end)}
+                        </div>
+
+                    </div>
+                `;
+            });
+
+
+        html+=`
+                </div>
+            </div>
+        `;
+    });
+
+
+    box.innerHTML=html;
+}
+
+
+/* ================= UTIL ================= */
+
+function esc(value){
+
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+}
+
+</script>
+
+
+    <!-- Master Program Table -->
     <div class="card-rail">
-        <div class="card-rail-header">
-            <h5 class="card-rail-title">
-                <i class="fa-solid fa-list-check text-primary"></i> Master Program Table (Detailed Activities)
+        <div class="card-rail-header d-flex justify-content-between align-items-center">
+            <h5 class="card-rail-title mb-0">
+                <i class="fa-solid fa-list-check text-primary me-2"></i> Master Program Table (Detailed Activities)
             </h5>
             <span class="badge bg-secondary">{{ total_scheduled }} Blocks Active</span>
         </div>
@@ -146,9 +973,9 @@
                             <th>Corridor & KM Range</th>
                             <th>Time Window</th>
                             <th>Primary & Shadow Activities</th>
-                            <th>Departments Involved</th>
-                            <th>Downtime Eliminated</th>
-                            <th>COA Status</th>
+                            <th>Departments</th>
+                            <th>Saved Time</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -174,7 +1001,7 @@
                                 </div>
                                 {% for bundled in b.bundled_demands.all %}
                                 <div class="small text-muted mt-1 ps-2 border-start border-success">
-                                    <strong class="text-success">[Shadow]</strong> {{ bundled.activity_name }} ({{ bundled.source_system }})
+                                    <strong class="text-success">[Shadow]</strong> {{ bundled.activity_name }}
                                 </div>
                                 {% endfor %}
                             </td>
@@ -192,9 +1019,8 @@
                             <td>
                                 {% if b.estimated_downtime_saved_minutes > 0 %}
                                     <span class="text-success fw-bold font-monospace">+{{ b.estimated_downtime_saved_minutes }} mins</span>
-                                    <div class="small text-muted">Saved by shadow bundling</div>
                                 {% else %}
-                                    <span class="text-muted small">0 mins (Single task)</span>
+                                    <span class="text-muted small">0 mins</span>
                                 {% endif %}
                             </td>
                             <td>
